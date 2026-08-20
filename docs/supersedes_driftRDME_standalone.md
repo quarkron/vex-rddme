@@ -10,8 +10,8 @@ This package supersedes it.
 | notebook section | now lives in |
 |---|---|
 | §1 pure WPE diffusion, three species at γ ∈ {+2, 0, −2} | `tests/test_hop.py::test_three_couplings_in_one_field_each_follow_boltzmann` |
-| §2 pure FN reaction, `Q(x)` diagnostic | `tests/test_react.py::test_local_equilibrium_ratio_follows_the_field`, and `notebooks/01_reaction_acceptance.ipynb` |
-| §3 combined drift + reaction | covered by the two above plus `notebooks/02_excess_chemical_potential.ipynb` |
+| §2 pure FN reaction, `Q(x)` diagnostic | `tests/test_react.py::test_local_equilibrium_ratio_follows_the_field`, and `notebooks/03_reversible_reaction_ramp_potential.ipynb` |
+| §3 combined drift + reaction | covered by the two above plus `notebooks/01_volume_excluded_lattice_gas.ipynb` |
 | optional 3D plotly viewer | `vex_rddme.viz` (matplotlib; `dim=3` reduces by sum or slice) |
 
 The three-γ section is called out because the **negative**-coupling case was not

@@ -51,16 +51,19 @@ Set `dim=3` for three dimensions. The physics is identical.
 A teaching and prototyping instrument. Read the method in an afternoon. Show it in a meeting. Try a mechanism
 without a GPU.
 
-Five notebooks check it against analytic results. Each prints the measured value beside
+Three notebooks check it against analytic results. Each prints the measured value beside
 the prediction, so you verify the implementation instead of trusting it.
 
 | notebook | checks | against |
 |---|---|---|
-| `01_reaction_acceptance` | hop + acceptance | `Q(x) ∝ e^{−Δφ}` |
-| `02_excess_chemical_potential` | ξ, BMCSL, table, self-exclusion | Carnahan–Starling |
-| `03_depletion` | multi-species BMCSL | insertion work |
-| `04_crowding_shifts_equilibrium` | exclusion × acceptance | flux balance, then Minton |
-| `05_sub_poissonian_occupancy` | the *second* moment, curvature of `μ_ex` | Poisson, then the compressibility relation |
+| `01_volume_excluded_lattice_gas` | exclusion alone, in three parts | Carnahan-Starling, Poisson and the compressibility relation, BMCSL insertion work |
+| `02_macromolecular_crowding` | exclusion × a reversible bimolecular reaction | flux balance, then the Minton shift |
+| `03_reversible_reaction_ramp_potential` | transport × acceptance, exclusion off | `Q(x) ∝ e^{−Δφ}` |
+
+Demonstration 1 has three parts, and each closes a gap the previous one leaves open.
+Part 1 fixes the excess chemical potential at the mean density. Part 2 fixes its
+curvature, which the first moment cannot see. Part 3 fixes the cross-species terms,
+which no single-species measurement constrains.
 
 ## What this is not
 
@@ -170,7 +173,7 @@ src/vex_rddme/
   observe.py   density profiles, μ_ex extraction, Q(x), K_eq
   viz.py       2D rendering and animation, 1D profiles
   sim.py       assembly, and the construction guards
-notebooks/     the five validation demonstrations
+notebooks/     the three validation demonstrations
 docs/          porting_to_lattice_microbes, supersedes_driftRDME_standalone
 bench/         relaxation.py
 tests/         242 tests

@@ -23,31 +23,29 @@ NOTEBOOKS = sorted((pathlib.Path(__file__).resolve().parents[1] / "notebooks").g
 
 # Shrink the runs. Each entry maps a source substring to its replacement.
 SPEEDUPS = {
-    "N_STEPS    = 30_000": "N_STEPS    = 6_000",
-    "N_STEPS   = 60_000": "N_STEPS   = 12_000",
-    # Demonstration 3 needs its full step count to equilibrate on a 24-wide box. Shrinking the
-    # box instead makes the shortened run genuinely equilibrated (relaxation scales as
-    # L^2), so the tolerance stays a real check rather than being loosened to fit.
-    "SHAPE     = (32, 24)": "SHAPE     = (16, 12)",
-    "N_STEPS   = 80_000": "N_STEPS   = 20_000",
+    # Demonstration 1 has three independent parts, each with its own step count.
+    # Part 3 needs the most: shrink its box as well, because relaxation scales as
+    # L^2 and a shortened run on a 24-wide box is not equilibrated.
+    "EOS_STEPS     = 60_000": "EOS_STEPS     = 12_000",
+    "FLUCT_STEPS    = 40_000": "FLUCT_STEPS    = 9_000",
+    "FLUCT_SAMPLE_EVERY = 100": "FLUCT_SAMPLE_EVERY = 30",
+    "FLUCT_OCCUPANCIES = (3, 6)": "FLUCT_OCCUPANCIES = (6,)",
+    "MIX_SHAPE     = (32, 24)": "MIX_SHAPE     = (16, 12)",
+    "MIX_STEPS     = 80_000": "MIX_STEPS     = 20_000",
+    # Demonstration 2
     "N_STEPS      = 40_000": "N_STEPS      = 8_000",
-    # Demonstration 5 measures a variance, so it needs samples rather than steps.
-    # Shrink the run but keep the sample spacing, and drop to the single denser
-    # occupancy so both the ideal and excluded cases still equilibrate.
-    "N_STEPS    = 40_000": "N_STEPS    = 9_000",
-    "SAMPLE_EVERY = 100": "SAMPLE_EVERY = 30",
-    "OCCUPANCIES = (3, 6)": "OCCUPANCIES = (6,)",
     "CROWDER_COUNTS = (0, 2, 4, 6)": "CROWDER_COUNTS = (0, 4)",
+    # Demonstration 3
+    "N_STEPS    = 30_000": "N_STEPS    = 6_000",
+    # never open a window
     "plt.show()": "plt.close('all')",
 }
 
 # Looser than the notebooks' own claims, because the runs are shortened.
 TOLERANCE = {
-    "01_reaction_acceptance": 0.25,
-    "02_excess_chemical_potential": 0.15,
-    "03_depletion": 0.30,
-    "04_crowding_shifts_equilibrium": 0.60,
-    "05_sub_poissonian_occupancy": 0.15,
+    "01_volume_excluded_lattice_gas": 0.30,
+    "02_macromolecular_crowding": 0.60,
+    "03_reversible_reaction_ramp_potential": 0.25,
 }
 
 

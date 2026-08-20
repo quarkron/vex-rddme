@@ -243,7 +243,8 @@ def test_equilibrium_ratio_equals_rate_ratio_without_exclusion():
 def test_local_equilibrium_ratio_follows_the_field():
     """Fröhner-Noé acceptance shifts the local equilibrium by exp(-dPhi).
 
-    A scaled-down version of the demonstration-1 notebook check, kept here so a regression is
+    A scaled-down version of the demonstration-3 notebook check, kept here so a
+    regression is
     caught by the test suite rather than only by running a notebook.
     """
     k_f, k_r, g = 1.0, 1.0, 1.5

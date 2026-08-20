@@ -93,7 +93,7 @@ class Series:
 
 
 # ---------------------------------------------------------------------------
-# Demonstration 2: excess chemical potential from a stationary profile
+# Demonstration 1, part 1: excess chemical potential from a stationary profile
 # ---------------------------------------------------------------------------
 
 
@@ -156,7 +156,7 @@ def relative_discrepancy(measured, predicted, scale=None):
 
 
 # ---------------------------------------------------------------------------
-# Demonstrations 1 and 4: reaction quotients
+# Demonstrations 2 and 3: reaction quotients
 # ---------------------------------------------------------------------------
 
 

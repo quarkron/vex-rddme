@@ -121,7 +121,7 @@ def plot_profile(
 
 
 def plot_mu_ex(eta, measured, analytic, sem=None, ax=None):
-    """Excess chemical potential against packing fraction (demonstration 2)."""
+    """Excess chemical potential against packing fraction (demonstration 1, part 1)."""
     order = np.argsort(np.asarray(eta))
     eta = np.asarray(eta)[order]
     measured = np.asarray(measured)[order]

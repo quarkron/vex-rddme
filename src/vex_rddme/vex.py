@@ -120,7 +120,8 @@ def mu_ex_carnahan_starling(eta):
 
     ``mu_ex = (8*eta - 9*eta**2 + 3*eta**3) / (1 - eta)**3``
 
-    The analytic reference for demonstration 2. BMCSL reduces to this for one species, so
+    The analytic reference for demonstration 1, part 1. BMCSL reduces to this for one
+    species, so
     this function is a check on :func:`bfex`, not a component of the solver.
     """
     eta = np.asarray(eta, dtype=np.float64)

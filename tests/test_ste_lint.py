@@ -227,7 +227,10 @@ def test_the_demonstrations_are_called_demonstrations():
     assert not offenders, f"the old word reappeared: {offenders}"
 
 
-def test_all_five_demonstrations_are_present():
+def test_the_three_demonstrations_are_present():
     names = sorted(p.name for p in (REPO / "notebooks").glob("*.ipynb"))
-    assert len(names) == 5, names
-    assert names[-1].startswith("05_")
+    assert names == [
+        "01_volume_excluded_lattice_gas.ipynb",
+        "02_macromolecular_crowding.ipynb",
+        "03_reversible_reaction_ramp_potential.ipynb",
+    ], names
