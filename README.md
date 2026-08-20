@@ -46,13 +46,7 @@ Order ≤ 2 per side. Reversible pairs hold detailed balance exactly.
 
 Set `dim=3` for three dimensions. The physics is identical.
 
-## What this is
-
-A teaching and prototyping instrument. Read the method in an afternoon. Show it in a meeting. Try a mechanism
-without a GPU.
-
-Three notebooks check it against analytic results. Each prints the measured value beside
-the prediction, so you verify the implementation instead of trusting it.
+## Demo Jupyter notebooks
 
 | notebook | checks | against |
 |---|---|---|
@@ -64,63 +58,6 @@ Demonstration 1 has three parts, and each closes a gap the previous one leaves o
 Part 1 fixes the excess chemical potential at the mean density. Part 2 fixes its
 curvature, which the first moment cannot see. Part 3 fixes the cross-species terms,
 which no single-species measurement constrains.
-
-## Guards
-
-Every condition that stops the package delivering the requested physics either aborts
-or reports. The package never clamps, clips, or substitutes a value silently.
-
-| guard | catches |
-|---|---|
-| σ/h consistency | diameters that admit no crowding at this voxel size |
-| ξ₃ saturation | packing fraction reaching 1, where exclusion stops repelling |
-| table radix | free-energy table too small for the occupancy cap |
-| cap vs exclusion | the integer cap, not the free energy, limiting density |
-| hop-probability sum | flux lost to clipping, checked **every step** |
-| reaction saturation | rate constants so large that propensities go inert |
-| mass conservation | any channel leaking particles |
-| detailed balance | forward/reverse works that are not exact negatives |
-
-### Choosing the occupancy cap
-
-The cap is one integer, so it is blunt across species sizes. Twenty 8 nm spheres in a
-20 nm voxel give ξ₃ = 0.67. Twenty 5 nm spheres give 0.16.
-
-Pick the cap from the **largest** species. Aim for ξ₃ between 0.4 and 0.7 at the cap,
-and leave headroom above the peak occupancy you expect.
-
-- Too high: the largest species can reach ξ₃ ≥ 1. Construction refuses it.
-- Too low: the cap limits density instead of the free energy. You get a warning.
-- Too near the peak: arrivals collide in one step and trip the `occupancy-cap` guard.
-
-That last case fails rather than repairs itself. Discarding the excess would break both
-mass conservation and detailed balance. Do one of these steps:
-
-- Reduce τ.
-- Raise the cap.
-- Use fewer particles.
-
-## Performance
-
-Per-step cost, 2 species, exclusion on, static ψ: **64² 0.87 ms**, **32³ 7.86 ms**. At
-4 species and occupancy 2: 64² 2.67 ms, 128² 9.45 ms.
-
-### Relaxation, and which lattice to use
-
-Steps to stationary matters more than seconds of simulated time, because every demonstration is
-an equilibrium measurement. Measured by releasing particles from the high-field half and
-tracking the profile's centre of mass (`bench/relaxation.py`):
-
-| lattice | N | τ (s) | ms/step | COM moved | steps | wall | ×10 for averaging |
-|---|---|---|---|---|---|---|---|
-| **64²** | 4 096 | 2.0e−5 | 1.01 | 21.9 vox | 18 900 | 19 s | **3.2 min** |
-| **32³** | 32 768 | 1.0e−5 | 9.56 | 9.9 vox | 6 325 | 61 s | **10.1 min** |
-| 128² | 16 384 | 1.0e−5 | 2.79 | 29.6 vox | 52 250 | 146 s | 24.3 min |
-
-- **64² is the notebook default.** A few minutes per measurement.
-- **32³ works for 3D.** Ten minutes. Slower, but not a token mode.
-- **128² is for figures.** Twenty-five minutes is a go-away-and-come-back run.
-
 
 ## Tutorials: launching simulations
 
@@ -439,6 +376,62 @@ docs/          porting_to_lattice_microbes, supersedes_driftRDME_standalone
 bench/         relaxation.py
 tests/         242 tests
 ```
+
+## Guards
+
+Every condition that stops the package delivering the requested physics either aborts
+or reports. The package never clamps, clips, or substitutes a value silently.
+
+| guard | catches |
+|---|---|
+| σ/h consistency | diameters that admit no crowding at this voxel size |
+| ξ₃ saturation | packing fraction reaching 1, where exclusion stops repelling |
+| table radix | free-energy table too small for the occupancy cap |
+| cap vs exclusion | the integer cap, not the free energy, limiting density |
+| hop-probability sum | flux lost to clipping, checked **every step** |
+| reaction saturation | rate constants so large that propensities go inert |
+| mass conservation | any channel leaking particles |
+| detailed balance | forward/reverse works that are not exact negatives |
+
+### Choosing the occupancy cap
+
+The cap is one integer, so it is blunt across species sizes. Twenty 8 nm spheres in a
+20 nm voxel give ξ₃ = 0.67. Twenty 5 nm spheres give 0.16.
+
+Pick the cap from the **largest** species. Aim for ξ₃ between 0.4 and 0.7 at the cap,
+and leave headroom above the peak occupancy you expect.
+
+- Too high: the largest species can reach ξ₃ ≥ 1. Construction refuses it.
+- Too low: the cap limits density instead of the free energy. You get a warning.
+- Too near the peak: arrivals collide in one step and trip the `occupancy-cap` guard.
+
+That last case fails rather than repairs itself. Discarding the excess would break both
+mass conservation and detailed balance. Do one of these steps:
+
+- Reduce τ.
+- Raise the cap.
+- Use fewer particles.
+
+## Performance
+
+Per-step cost, 2 species, exclusion on, static ψ: **64² 0.87 ms**, **32³ 7.86 ms**. At
+4 species and occupancy 2: 64² 2.67 ms, 128² 9.45 ms.
+
+### Relaxation, and which lattice to use
+
+Steps to stationary matters more than seconds of simulated time, because every demonstration is
+an equilibrium measurement. Measured by releasing particles from the high-field half and
+tracking the profile's centre of mass (`bench/relaxation.py`):
+
+| lattice | N | τ (s) | ms/step | COM moved | steps | wall | ×10 for averaging |
+|---|---|---|---|---|---|---|---|
+| **64²** | 4 096 | 2.0e−5 | 1.01 | 21.9 vox | 18 900 | 19 s | **3.2 min** |
+| **32³** | 32 768 | 1.0e−5 | 9.56 | 9.9 vox | 6 325 | 61 s | **10.1 min** |
+| 128² | 16 384 | 1.0e−5 | 2.79 | 29.6 vox | 52 250 | 146 s | 24.3 min |
+
+- **64² is the notebook default.** A few minutes per measurement.
+- **32³ works for 3D.** Ten minutes. Slower, but not a token mode.
+- **128² is for figures.** Twenty-five minutes is a go-away-and-come-back run.
 
 ## References
 
