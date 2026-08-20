@@ -102,15 +102,35 @@ def test_matplotlib_is_not_imported_at_package_import_time():
     )
 
 
-def test_readme_quickstart_runs_as_printed():
-    """The first python block in the README must execute.
-
-    A quickstart that has drifted from the API is the first thing a new reader hits,
-    so it is checked rather than trusted.
-    """
+def _readme_blocks():
     import re
 
     readme = pathlib.Path(__file__).resolve().parents[1] / "README.md"
-    blocks = re.findall(r"```python\n(.*?)```", readme.read_text(), re.S)
-    assert blocks, "README has no python block"
-    exec(compile(blocks[0], "README quickstart", "exec"), {"__name__": "__readme__"})
+    return re.findall(r"```python\n(.*?)```", readme.read_text(), re.S)
+
+
+def test_readme_has_the_expected_number_of_blocks():
+    """Guard the guard: an empty match would make the execution test vacuous."""
+    assert len(_readme_blocks()) >= 9
+
+
+@pytest.mark.parametrize("index", range(len(_readme_blocks())))
+def test_readme_block_runs_as_printed(index):
+    """Every python block in the README must execute.
+
+    The quickstart is the first thing a reader meets and the tutorials are the second,
+    so a block that has drifted from the API is worse than no block at all. Each runs
+    in a fresh namespace, because each is written to stand alone.
+    """
+    import contextlib
+    import io
+    import logging
+
+    block = _readme_blocks()[index]
+    logging.disable(logging.CRITICAL)      # guard INFO lines are not the subject here
+    try:
+        with contextlib.redirect_stdout(io.StringIO()):
+            exec(compile(block, f"README block {index}", "exec"),
+                 {"__name__": "__readme__"})
+    finally:
+        logging.disable(logging.NOTSET)

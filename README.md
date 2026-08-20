@@ -160,6 +160,309 @@ bound. Use `suggest_tau()` to compute it.
 If the `hop-probability-sum` guard fires, τ is too large for the crowding that
 developed. That is not a bug. The 128² row above needed a τ backoff for this reason.
 
+## Tutorials: launching simulations
+
+Each step below is runnable on its own and builds on the one before. Step counts are
+small so they finish in seconds; a real measurement needs the numbers in
+[Relaxation, and which lattice to use](#relaxation-and-which-lattice-to-use).
+
+### 1. The smallest useful run
+
+An ideal lattice gas: no potential, no exclusion, no reactions. `sigma_nm=0` makes a
+species ideal, so it occupies no volume.
+
+```python
+import numpy as np
+from vex_rddme import Simulation, Species
+
+sim = Simulation(
+    shape=(32, 32),          # 2D. Use a 3-tuple for 3D.
+    voxel_nm=20.0,           # voxel edge h
+    species=[Species("A", sigma_nm=0.0, gamma=np.zeros(0))],
+    occupancy_cap=200,       # most particles one voxel may hold
+    D_um2_s=1.0,             # diffusion coefficient
+    tau_s=2.0e-5,            # timestep
+    seed=0,
+)
+sim.seed_uniform("A", 2000)  # scatter 2000 particles at random
+sim.record_initial()         # freeze the reference for the mass check
+
+for _ in range(500):
+    sim.step()
+
+sim.state.check_mass()       # exact: integers in, integers out
+print(sim.state.totals())    # [2000]
+```
+
+`gamma=np.zeros(0)` declares no basis fields, so `psi` is not needed. Two things are
+worth doing on every run: `record_initial()` once at the start, and `check_mass()`
+whenever you want proof that nothing leaked.
+
+### 2. Add a one-body potential
+
+A potential is any per-voxel array you supply. It is an **input**: the package never
+modifies it. Each species declares how strongly it feels each field through `gamma`.
+
+```python
+import numpy as np
+from vex_rddme import Simulation, Species
+
+N = 32
+ramp = np.arange(N) / N                              # psi rising 0 to 1
+psi = np.broadcast_to(ramp, (N, N)).copy()[None, ...]  # shape (n_fields, N, N)
+
+sim = Simulation(
+    shape=(N, N), voxel_nm=20.0,
+    species=[Species("A", sigma_nm=0.0, gamma=np.array([2.0]))],  # gamma = 2
+    occupancy_cap=200, psi=psi, D_um2_s=1.0, tau_s=2.0e-5, seed=0,
+)
+sim.seed_uniform("A", 4000)
+sim.record_initial()
+for _ in range(3000):
+    sim.step()
+
+# rho ~ exp(-gamma * psi), so the low-psi edge fills up
+profile = sim.state.lattice_view("A").sum(axis=0)
+print(f"low-psi edge {profile[0]:.0f}, high-psi edge {profile[-1]:.0f}")
+```
+
+The sign convention: positive `gamma` means the species is **repelled** from high `psi`.
+At equilibrium the density follows `exp(-phi)` with `phi = sum_k gamma[k] * psi[k]`.
+
+### 3. Add volume exclusion
+
+Give a species a diameter and it becomes a hard sphere. Now the timestep is set by
+exclusion rather than by the CFL bound, so ask `suggest_tau` for it.
+
+```python
+import numpy as np
+from vex_rddme import Simulation, Species
+from vex_rddme.guards import suggest_tau
+
+VOXEL, SIGMA, CAP, N_PER_VOXEL = 20.0, 8.0, 20, 3
+dxi3 = (np.pi / 6) * SIGMA**3 / VOXEL**3      # packing fraction per particle
+eta_expected = 3.0 * N_PER_VOXEL * dxi3       # allow the field to triple the peak
+
+tau = suggest_tau(D_um2_s=1.0, voxel_nm=VOXEL, dim=2, eta_max=eta_expected)
+print(f"eta at the mean density {N_PER_VOXEL * dxi3:.3f}, suggested tau {tau:.2e} s")
+
+N = 32
+ramp = np.arange(N) / N
+psi = np.broadcast_to(ramp, (N, N)).copy()[None, ...]
+
+sim = Simulation(
+    shape=(N, N), voxel_nm=VOXEL,
+    species=[Species("A", sigma_nm=SIGMA, gamma=np.array([2.0]))],
+    occupancy_cap=CAP, psi=psi, D_um2_s=1.0, tau_s=tau, seed=0,
+)
+# seed an exact uniform count, not a random one: random seeding creates
+# high-occupancy outliers whose exclusion work is large
+sim.set_counts("A", np.full((N, N), N_PER_VOXEL, dtype=np.int64))
+sim.record_initial()
+for _ in range(2000):
+    sim.step()
+
+sim.state.check_mass()
+print(f"mean packing fraction {sim.packing_fraction():.4f}")
+```
+
+### 4. Add a reversible reaction
+
+You declare reactions in Python. Order at most 2 on each side. A non-zero
+`k_reverse` makes the pair reversible, and detailed balance then holds exactly.
+
+```python
+import numpy as np
+from vex_rddme import Simulation, Species
+
+N = 24
+sim = Simulation(
+    shape=(N, N), voxel_nm=20.0,
+    species=[
+        Species("A", sigma_nm=0.0, gamma=np.zeros(0)),
+        Species("B", sigma_nm=0.0, gamma=np.zeros(0)),
+        Species("C", sigma_nm=0.0, gamma=np.zeros(0)),
+    ],
+    occupancy_cap=400, D_um2_s=1.0, tau_s=2.0e-5, exclusion=False, seed=0,
+)
+sim.add_reaction("assoc", ["A", "B"], ["C"],
+                 k_forward=40.0, k_reverse=200.0,
+                 typical_reactant_product=9.0)   # only used by the saturation guard
+sim.seed_uniform("A", 1500)
+sim.seed_uniform("B", 1500)
+sim.record_initial()
+
+for _ in range(4000):
+    sim.step()
+
+a, b, c = sim.state.counts
+Q = c.mean() / (a.astype(float) * b.astype(float)).mean()
+print(f"Q = {Q:.3f}, k_F/k_R = {40.0/200.0:.3f}")
+print("detailed-balance residual:",
+      f"{sim.reactions.detailed_balance_residual(np.random.default_rng(0)):.2e}")
+```
+
+Use the mean of the **product** `<n_A n_B>` in the denominator, not the product of the
+means. The reactants are correlated through the conservation law.
+
+### 5. Add an inert crowder
+
+An inert species excludes volume but never reacts and feels no field, so you can vary
+crowding without touching anything else. It is the sweep variable for a crowding study.
+
+```python
+import numpy as np
+from vex_rddme import Simulation, Species
+from vex_rddme.guards import suggest_tau
+
+sA = sB = 6.0
+sC = (sA**3 + sB**3) ** (1/3)     # volume-conserving product: xi_3 unchanged
+N, CAP = 24, 24
+tau = suggest_tau(D_um2_s=1.0, voxel_nm=20.0, dim=2, eta_max=0.45)
+
+for n_crowder in (0, 4):
+    sim = Simulation(
+        shape=(N, N), voxel_nm=20.0,
+        species=[
+            Species("A", sA, np.zeros(0)),
+            Species("B", sB, np.zeros(0)),
+            Species("C", sC, np.zeros(0)),
+            Species("X", 7.0, np.zeros(0), inert=True),   # the crowder
+        ],
+        occupancy_cap=CAP, D_um2_s=1.0, tau_s=tau, seed=11,
+        attach_log_handler=False,
+    )
+    sim.add_reaction("assoc", ["A", "B"], ["C"], 60.0, 300.0,
+                     typical_reactant_product=9.0)
+    sim.set_counts("A", np.full((N, N), 3, dtype=np.int64))
+    sim.set_counts("B", np.full((N, N), 3, dtype=np.int64))
+    if n_crowder:
+        sim.set_counts("X", np.full((N, N), n_crowder, dtype=np.int64))
+    sim.record_initial()
+    for _ in range(1500):
+        sim.step()
+    print(f"crowder {n_crowder}: xi_3^X = {sim.crowder_packing_fraction():.4f}")
+```
+
+Construction refuses a crowder that has non-zero `gamma`, and refuses to put one in a
+reaction. That is what keeps it a clean independent variable.
+
+### 6. Run in three dimensions
+
+Pass a 3-tuple. Nothing else changes, except that the CFL bound tightens from
+`1/(2*2)` to `1/(2*3)`.
+
+```python
+import numpy as np
+from vex_rddme import Simulation, Species
+from vex_rddme.guards import suggest_tau
+
+tau = suggest_tau(D_um2_s=1.0, voxel_nm=20.0, dim=3, eta_max=0.3)
+sim = Simulation(
+    shape=(16, 16, 16), voxel_nm=20.0,             # <- 3-tuple
+    species=[Species("A", sigma_nm=8.0, gamma=np.zeros(0))],
+    occupancy_cap=20, D_um2_s=1.0, tau_s=tau, seed=0,
+)
+sim.set_counts("A", np.full((16, 16, 16), 3, dtype=np.int64))
+sim.record_initial()
+for _ in range(300):
+    sim.step()
+sim.state.check_mass()
+print(f"dim {sim.lattice.dim}, CFL limit {sim.lattice.cfl_limit():.4f}")
+```
+
+3D costs about ten times more per step than 2D at a comparable voxel count. See the
+relaxation table for what that means in wall time.
+
+### 7. Sample correctly
+
+Every measurement here is an equilibrium average, so two things matter: discard the
+approach to equilibrium, and space the samples. Consecutive configurations are
+strongly correlated, so sampling every step inflates the apparent sample count without
+adding information.
+
+```python
+import numpy as np
+from vex_rddme import Simulation, Species
+from vex_rddme.observe import Series, project
+
+N, STEPS = 24, 3000
+BURN_IN, SAMPLE_EVERY = STEPS // 3, 25      # discard a third, then space the samples
+
+ramp = np.arange(N) / N
+psi = np.broadcast_to(ramp, (N, N)).copy()[None, ...]
+sim = Simulation(
+    shape=(N, N), voxel_nm=20.0,
+    species=[Species("A", 0.0, np.array([2.0]))],
+    occupancy_cap=400, psi=psi, D_um2_s=1.0, tau_s=2.0e-5, seed=0,
+)
+sim.seed_uniform("A", 4000)
+sim.record_initial()
+
+rho = Series("density")
+for i in range(STEPS):
+    sim.step()
+    if i >= BURN_IN and i % SAMPLE_EVERY == 0:
+        rho.add(project(sim.state.lattice_view("A"), sim.lattice) / N)
+
+print(f"{rho.n} samples, mean {rho.mean.mean():.3f}, typical error {rho.sem.mean():.4f}")
+```
+
+`Series` uses Welford's algorithm, so the error bar stays accurate even when the mean
+is large. Its `sem` is the naive standard error over samples, which is a **lower
+bound** when samples are correlated.
+
+### 8. Read the guard output
+
+Construction reports what it found. A normal run looks like this:
+
+```
+INFO [sigma-voxel] maximum attainable packing fraction is 0.6702 ...
+INFO [exclusion] free-energy table built: 1 hard-core species, radix 22 ...
+INFO [packing] occupancy at xi3 = 0.5 per species: A: 14.9
+INFO [cap-vs-exclusion] A voxel at the cap reaches packing fraction 0.67.
+                        Exclusion is the binding constraint, as intended.
+INFO [cfl] baseline hop probability q = 0.0128 (limit 0.25, 2D)
+```
+
+Read the last two. `cap-vs-exclusion` tells you whether the physics or the integer cap
+is limiting density. `cfl` tells you how much timestep headroom you have.
+
+Pass `attach_log_handler=False` to silence the stream and inspect
+`sim.report.records` instead. A failure raises `GuardViolation`, and every message
+names the values, the limit, and the actions that would fix it.
+
+```python
+from vex_rddme.guards import GuardViolation
+import numpy as np
+from vex_rddme import Simulation, Species
+
+try:
+    Simulation(shape=(8, 8), voxel_nm=10.0,
+               species=[Species("big", sigma_nm=10.0, gamma=np.zeros(0))],
+               occupancy_cap=4, seed=0, attach_log_handler=False)
+except GuardViolation as exc:
+    print(exc)
+```
+
+### 9. Choose the parameters
+
+The three that interact:
+
+**Timestep.** Use `suggest_tau`. If the `hop-probability-sum` guard fires mid-run, the
+crowding grew past what that timestep supports: halve it and rerun. That is the guard
+working, not a bug.
+
+**Occupancy cap.** Pick it from the *largest* species, aiming for a packing fraction
+between 0.4 and 0.7 at the cap, and leave headroom above the peak occupancy you
+expect. See [Choosing the occupancy cap](#choosing-the-occupancy-cap).
+
+**Lattice.** 64 squared for a notebook, 32 cubed for 3D, 128 squared for figures. The
+relaxation table gives the wall time for each.
+
+A useful sanity check before a long run: do a short one and read the guard lines. If
+`cap-vs-exclusion` warns, or `cfl` shows almost no headroom, fix that first.
+
 ## Layout
 
 ```
