@@ -7,13 +7,9 @@
 - **White-Bear / BMCSL** multi-species hard-sphere exclusion, with self-exclusion
 - **Fröhner–Noé** acceptance for reversible reactions of order ≤ 2, declared in Python
 
-Two dependencies: numpy and matplotlib. No CUDA, no HDF5, no SWIG, no numba, no
-compile step. It runs in a notebook on a laptop.
+Only uses numpy and matplotlib. No GPU acceleration, meant only for quick prototyping/demonstration purposes.
 
 ## Install
-
-The only runtime dependencies are numpy and matplotlib. There is no build step, so the
-install needs no compiler, no CUDA toolkit and no LLVM.
 
 Clone, then install in editable mode with the test extra:
 
