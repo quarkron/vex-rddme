@@ -23,7 +23,7 @@ otherwise covered: the single-species tests only exercised γ ≥ 0.
 per-species occupancy counts because that is the natural numpy expression. This package
 uses them because they are the RDME's own state variable *and* because the measured
 crossover against a particle representation sits at about one particle per voxel per
-species — volume-exclusion studies live above it, where count cost is nearly flat in
+species. Volume-exclusion studies live above it, where count cost is nearly flat in
 occupancy and particle cost is linear.
 
 **`p_cond` is no longer precomputed once.** The notebook precomputed the conditional
@@ -47,4 +47,4 @@ small.
 The original notebook has been left in place at
 `~/ftsz_tests/driftRDME_standalone.ipynb`. Nothing in this package depends on it, and
 everything it validated is reproduced above, so it can be deleted whenever its owner
-wants to — that deletion is deliberately not automated.
+wants to. That deletion is deliberately not automated.

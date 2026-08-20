@@ -2,7 +2,7 @@
 
 Each guard corresponds to a way the physics dies quietly. The tests check not only
 that a violation is caught, but that the message names the value, the limit, and
-the knob that fixes it — a guard the reader cannot act on is barely better than
+the knob that fixes it. A guard the reader cannot act on is barely better than
 silence.
 """
 
@@ -124,7 +124,7 @@ def test_configuration_just_below_unit_packing_passes_construction():
     """Construction only rejects `xi3 >= 1`; a hair under is legal by spec.
 
     Such a configuration is physically useless, but it is the per-step saturation
-    guard's job to catch it — construction cannot know how full voxels will get, so
+    guard's job to catch it. Construction cannot know how full voxels will get, so
     drawing the line anywhere above the representable maximum would reject valid
     setups. Documented here so the division of labour is deliberate rather than an
     accident of the comparison operator.

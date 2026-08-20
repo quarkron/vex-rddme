@@ -51,7 +51,7 @@ Set `dim=3` for three dimensions. The physics is identical.
 A teaching and prototyping instrument. Read the method in an afternoon. Show it in a meeting. Try a mechanism
 without a GPU.
 
-Four notebooks check it against analytic results. Each prints the measured value beside
+Five notebooks check it against analytic results. Each prints the measured value beside
 the prediction, so you verify the implementation instead of trusting it.
 
 | notebook | checks | against |
@@ -60,6 +60,7 @@ the prediction, so you verify the implementation instead of trusting it.
 | `02_excess_chemical_potential` | ξ, BMCSL, table, self-exclusion | Carnahan–Starling |
 | `03_depletion` | multi-species BMCSL | insertion work |
 | `04_crowding_shifts_equilibrium` | exclusion × acceptance | flux balance, then Minton |
+| `05_sub_poissonian_occupancy` | the *second* moment, curvature of `μ_ex` | Poisson, then the compressibility relation |
 
 ## What this is not
 
@@ -95,7 +96,7 @@ or reports. The package never clamps, clips, or substitutes a value silently.
 | ξ₃ saturation | packing fraction reaching 1, where exclusion stops repelling |
 | table radix | free-energy table too small for the occupancy cap |
 | cap vs exclusion | the integer cap, not the free energy, limiting density |
-| hop-probability sum | flux lost to clipping — checked **every step** |
+| hop-probability sum | flux lost to clipping, checked **every step** |
 | reaction saturation | rate constants so large that propensities go inert |
 | mass conservation | any channel leaking particles |
 | detailed balance | forward/reverse works that are not exact negatives |
@@ -126,7 +127,7 @@ Per-step cost, 2 species, exclusion on, static ψ: **64² 0.87 ms**, **32³ 7.86
 
 ### Relaxation, and which lattice to use
 
-Steps to stationary matters more than seconds of simulated time, because every rung is
+Steps to stationary matters more than seconds of simulated time, because every demonstration is
 an equilibrium measurement. Measured by releasing particles from the high-field half and
 tracking the profile's centre of mass (`bench/relaxation.py`):
 
@@ -169,7 +170,7 @@ src/vex_rddme/
   observe.py   density profiles, μ_ex extraction, Q(x), K_eq
   viz.py       2D rendering and animation, 1D profiles
   sim.py       assembly, and the construction guards
-notebooks/     the four validation rungs
+notebooks/     the five validation demonstrations
 docs/          porting_to_lattice_microbes, supersedes_driftRDME_standalone
 bench/         relaxation.py
 tests/         242 tests
@@ -177,9 +178,9 @@ tests/         242 tests
 
 ## References
 
-- Wang, Peskin & Elston — Scharfetter–Gummel discretisation of the lattice
+- Wang, Peskin & Elston: Scharfetter–Gummel discretisation of the lattice
   Fokker–Planck equation
-- Roth, Evans, Lang & Kahl 2002; Yu & Wu 2002 — White-Bear / BMCSL fundamental-measure
+- Roth, Evans, Lang & Kahl 2002; Yu & Wu 2002: White-Bear / BMCSL fundamental-measure
   excess free energy
-- Fröhner & Noé 2018 — Metropolis acceptance for reactive lattice schemes
-- Minton — macromolecular crowding shifting association equilibria
+- Fröhner & Noé 2018: Metropolis acceptance for reactive lattice schemes
+- Minton: macromolecular crowding shifting association equilibria

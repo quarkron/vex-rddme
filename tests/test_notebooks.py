@@ -25,12 +25,18 @@ NOTEBOOKS = sorted((pathlib.Path(__file__).resolve().parents[1] / "notebooks").g
 SPEEDUPS = {
     "N_STEPS    = 30_000": "N_STEPS    = 6_000",
     "N_STEPS   = 60_000": "N_STEPS   = 12_000",
-    # Rung 3 needs its full step count to equilibrate on a 24-wide box. Shrinking the
+    # Demonstration 3 needs its full step count to equilibrate on a 24-wide box. Shrinking the
     # box instead makes the shortened run genuinely equilibrated (relaxation scales as
     # L^2), so the tolerance stays a real check rather than being loosened to fit.
     "SHAPE     = (32, 24)": "SHAPE     = (16, 12)",
     "N_STEPS   = 80_000": "N_STEPS   = 20_000",
     "N_STEPS      = 40_000": "N_STEPS      = 8_000",
+    # Demonstration 5 measures a variance, so it needs samples rather than steps.
+    # Shrink the run but keep the sample spacing, and drop to the single denser
+    # occupancy so both the ideal and excluded cases still equilibrate.
+    "N_STEPS    = 40_000": "N_STEPS    = 9_000",
+    "SAMPLE_EVERY = 100": "SAMPLE_EVERY = 30",
+    "OCCUPANCIES = (3, 6)": "OCCUPANCIES = (6,)",
     "CROWDER_COUNTS = (0, 2, 4, 6)": "CROWDER_COUNTS = (0, 4)",
     "plt.show()": "plt.close('all')",
 }
@@ -41,6 +47,7 @@ TOLERANCE = {
     "02_excess_chemical_potential": 0.15,
     "03_depletion": 0.30,
     "04_crowding_shifts_equilibrium": 0.60,
+    "05_sub_poissonian_occupancy": 0.15,
 }
 
 

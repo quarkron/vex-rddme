@@ -8,8 +8,8 @@ Three things the exploration probes got wrong, all fixed here:
 2. **Mass must be exactly conserved**, checked against a recorded initial total, so a
    "relaxed" profile cannot be an artifact of leaking particles.
 3. **The convergence metric needs a noise floor below its threshold.** The summed
-   per-bin profile deviation has a Poisson floor of order ``sqrt(N/bins) * bins / N``
-   — about 12% for 4096 particles in 64 bins — so a 2% threshold on it is
+   per-bin profile deviation has a Poisson floor of order ``sqrt(N/bins) * bins / N``,
+   about 12% for 4096 particles in 64 bins. A 2% threshold on it is therefore
    unreachable in principle. The profile's *centre of mass* is one scalar with noise
    ``sigma_x / sqrt(N)``, roughly 0.2 voxels here, against a dynamic range of ~20
    voxels. That is the observable with the headroom to measure a relaxation time.

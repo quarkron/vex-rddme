@@ -25,7 +25,7 @@ env/
 *.swp
 .DS_Store
 
-# Notebook checkpoints — but the notebooks themselves are the deliverable
+# Notebook checkpoints: but the notebooks themselves are the deliverable
 .ipynb_checkpoints/
 
 # Local scratch

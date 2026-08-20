@@ -7,7 +7,7 @@ obvious landing site for whatever you validated here. This document is that map.
 **What transfers is the physics, not the code.** The two implementations deliberately
 differ in data layout and in numerics, and no numerical agreement between them is
 claimed or tested. What is shared is the free-energy functional, the acceptance rules,
-and the decomposition of dynamics into channels — so a mechanism expressed here has a
+and the decomposition of dynamics into channels. So a mechanism expressed here has a
 one-to-one statement there.
 
 ## The free energy
@@ -20,7 +20,7 @@ one-to-one statement there.
 | `ExclusionModel.channel_work(counts, dnu)` | `whiteBearHopDelta(type, xi_src, xi_dst)` for hops |
 
 The functional is identical, including the `log(1 - xi3)` term that makes it BMCSL
-rather than Rosenfeld-1989. Both multiply by the voxel volume at the end — that factor
+rather than Rosenfeld-1989. Both multiply by the voxel volume at the end. That factor
 is what turns a free-energy *density* into a per-voxel energy in kT, and dropping it
 makes every work `1/V` too small while leaving profiles looking plausible.
 
@@ -51,7 +51,7 @@ Both use the same sign convention: the Bernoulli argument is `phi_dst - phi_src`
 (`psiSelfLookupG`, `chargeHoleFlagsG`). This package has no self-consistent fields, so
 a particle never sources the field it feels and the correction has nothing to correct.
 If you prototype anything where particles source their own field, that term must come
-with it — without it, every particle is repelled by itself.
+with it. Without it, every particle is repelled by itself.
 
 ## Reactions
 
@@ -73,18 +73,18 @@ be evaluated from the **post-reaction** count vector, not the pre-reaction one:
 That makes `pi_f / pi_r = exp(-dPhi)` identically, so detailed balance holds by
 construction rather than approximately. Evaluating the reverse from `n` gives
 `F(n - dnu) - F(n)`, which is not the negative of the forward work, and detailed
-balance breaks *silently* — measurably, but only if you look. Here that is pinned by
+balance breaks *silently*. It is measurable, but only if you look. Here that is pinned by
 `ReactionSet.detailed_balance_residual()` and by a test asserting the wrong
 formulation fails it. Any port should carry an equivalent check.
 
-## State layout — where the two genuinely diverge
+## State layout: where the two genuinely diverge
 
 | here | Lattice Microbes 2.6 |
 |---|---|
 | `State.counts[species, voxel]`, integer | packed byte lattice, `MPD_WORDS_PER_SITE` words/site |
 | `State.occupancy_cap` | `MAX_OCCUPANCY`, with `correct_overflows` |
-| — | `structComplexIdG` (L1), `structBondDirG` (L2), `structRoleFillG` (L3) |
-| — | `structRegistryG[cid-1]`, the per-complex registry |
+| none | `structComplexIdG` (L1), `structBondDirG` (L2), `structRoleFillG` (L3) |
+| none | `structRegistryG[cid-1]`, the per-complex registry |
 
 This package has no structure overlay at all, so nothing involving bonded assemblies
 can be prototyped here. That is the sharpest scope limit: filaments, tips, severing,
@@ -111,5 +111,5 @@ annealing, anchors and links have no representation.
 3. Check whether the result is a refutation or a positive. Refutations travel to 3D and
    to the kernel; positives do not.
 4. Write the kernel version against the row of the tables above, and reproduce the
-   corresponding guard — especially the detailed-balance residual if the channel is
+   corresponding guard, above all the detailed-balance residual if the channel is
    reversible.

@@ -243,7 +243,7 @@ def test_equilibrium_ratio_equals_rate_ratio_without_exclusion():
 def test_local_equilibrium_ratio_follows_the_field():
     """Fröhner-Noé acceptance shifts the local equilibrium by exp(-dPhi).
 
-    A scaled-down version of the rung-1 notebook check, kept here so a regression is
+    A scaled-down version of the demonstration-1 notebook check, kept here so a regression is
     caught by the test suite rather than only by running a notebook.
     """
     k_f, k_r, g = 1.0, 1.0, 1.5
@@ -465,8 +465,8 @@ def test_exclusion_work_is_zero_where_the_reaction_is_infeasible():
     """The table's removal lookup is only valid where the reactant is present.
 
     With n_s == 0 the index subtraction borrows from a higher digit and lands on an
-    unrelated composition. The step path never notices — the propensity is zero
-    there — but averaging the work over voxels would silently average garbage, which
+    unrelated composition. The step path never notices, because the propensity is zero
+    there. But averaging the work over voxels would silently average garbage, which
     is exactly how a crowding-shift prediction came out as -5290 instead of +0.3.
     """
     sim = build(shape=(6, 6), cap=24)

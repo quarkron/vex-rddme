@@ -1,7 +1,7 @@
 """Observables: profiles with error bars, and the analytic comparisons.
 
-Every validation rung compares a measured quantity against an analytic prediction,
-so measurements carry a standard error rather than a bare number — a discrepancy is
+Every validation demonstration compares a measured quantity against an analytic prediction,
+so measurements carry a standard error rather than a bare number. A discrepancy is
 only meaningful next to the noise on it.
 
 Samples drawn from a running simulation are strongly correlated, so the standard
@@ -41,8 +41,8 @@ class Series:
     Uses Welford's online algorithm rather than accumulating ``sum`` and ``sum of
     squares``. The textbook ``E[x^2] - E[x]^2`` form loses catastrophically to
     cancellation when the mean is large relative to the spread: for a mean of 1e8 with
-    a true standard deviation of 1, it reports about 4.4 — a 300% error, silently.
-    Every validation rung states its claim next to an error bar, so a silently wrong
+    a true standard deviation of 1, it reports about 4.4, a 300% error, silently.
+    Every validation demonstration states its claim next to an error bar, so a silently wrong
     error bar is precisely the failure this package refuses elsewhere.
 
     ``sem`` is the naive standard error of the mean over samples. It is a lower bound
@@ -93,7 +93,7 @@ class Series:
 
 
 # ---------------------------------------------------------------------------
-# Rung 2: excess chemical potential from a stationary profile
+# Demonstration 2: excess chemical potential from a stationary profile
 # ---------------------------------------------------------------------------
 
 
@@ -156,7 +156,7 @@ def relative_discrepancy(measured, predicted, scale=None):
 
 
 # ---------------------------------------------------------------------------
-# Rungs 1 and 4: reaction quotients
+# Demonstrations 1 and 4: reaction quotients
 # ---------------------------------------------------------------------------
 
 
@@ -224,7 +224,7 @@ class QuotientAccumulator:
     @property
     def sem(self):
         """Propagated standard error, treating numerator and denominator errors
-        as independent — an approximation, since they are anticorrelated through
+        as independent. That is an approximation, since they are anticorrelated through
         the conservation law, so this errs on the conservative side."""
         num, den = self._num.mean, self._den.mean
         rel = np.sqrt(

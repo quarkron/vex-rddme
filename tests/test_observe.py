@@ -249,7 +249,7 @@ def test_series_variance_survives_a_large_mean():
 
     The textbook form cancels catastrophically when the mean dwarfs the spread: at a
     mean of 1e8 with true sd 1 it reported ~4.4, a 300% error, with no indication
-    anything was wrong. Error bars back every rung's stated claim, so a silently wrong
+    anything was wrong. Error bars back every demonstration's stated claim, so a silently wrong
     one is the failure mode this package refuses elsewhere.
     """
     rng = np.random.default_rng(0)

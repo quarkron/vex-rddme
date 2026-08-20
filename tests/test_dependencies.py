@@ -4,7 +4,7 @@ The package exists so that it can be opened and run without a build step, an LLV
 toolchain, or a GPU. That property is only real if it is checked: a single
 ``import numba`` added in passing would quietly destroy the reason the package
 exists. CI installs the declared dependencies with ``--no-deps``, so a stray import
-fails there too — this test localises the failure to the offending module and name.
+fails there too. This test localises the failure to the offending module and name.
 """
 
 import ast
@@ -84,7 +84,7 @@ def test_matplotlib_is_not_imported_at_package_import_time():
     Run in a subprocess deliberately. Clearing ``sys.modules`` in-process would give
     the rest of the suite a *second* copy of the package, with a second
     ``GuardViolation`` class that ``pytest.raises`` in other test modules would fail
-    to catch — a genuinely confusing failure that this test caused once already.
+    to catch. It is a genuinely confusing failure that this test caused once already.
     """
     code = (
         "import sys; import vex_rddme; "

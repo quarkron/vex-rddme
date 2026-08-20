@@ -177,9 +177,9 @@ class Hop:
 
         Returns ``(insert, remove)`` each shaped ``(n_species, n_voxels)``:
 
-        * ``insert[s][v] = F(n(v) + dxi_s) - F(n(v))`` — cost of adding one
+        * ``insert[s][v] = F(n(v) + dxi_s) - F(n(v))``: cost of adding one
           particle of ``s`` at ``v``.
-        * ``remove[s][v] = F(n(v)) - F(n(v) - dxi_s)`` — cost already paid by a
+        * ``remove[s][v] = F(n(v)) - F(n(v) - dxi_s)``: cost already paid by a
           particle of ``s`` sitting at ``v``, i.e. the self-exclusion term.
 
         A hop's exclusion work is then ``insert[s]`` read at the destination minus

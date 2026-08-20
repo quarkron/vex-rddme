@@ -8,18 +8,18 @@ places, and both inversions exist because the silent version costs real time to
 diagnose:
 
 * ``xi3`` at or above 1 is clamped there. Past that point the free energy is capped
-  and exclusion stops repelling — the physics switches off in exactly the crowded
+  and exclusion stops repelling. The physics switches off in exactly the crowded
   regime the method exists for, and nothing says so.
 * A per-direction hop probability sum above 1 is absorbed by clipping in the
   conditional-binomial split. Flux is lost, silently, and only in crowded runs.
 
 Guards are grouped by when they can fire:
 
-* **Construction** — sigma/h consistency, table radix, baseline CFL. Cheap, once.
-* **Per step** — hop-probability sum, ``xi3`` saturation. The exclusion work grows
+* **Construction**: sigma/h consistency, table radix, baseline CFL. Cheap, once.
+* **Per step**: hop-probability sum, ``xi3`` saturation. The exclusion work grows
   as crowding develops, so a run can start valid and become invalid; these cannot
   be construction-time checks.
-* **On demand** — mass conservation, detailed-balance residual. Used by tests and
+* **On demand**: mass conservation, detailed-balance residual. Used by tests and
   available to notebooks.
 
 A library configuring logging is normally rude. It is done here because a guard
@@ -110,7 +110,7 @@ def check_sigma_voxel_consistency(species, voxel_nm, occupancy_cap, report):
     Each particle of species ``s`` adds ``dxi3 = (pi/6) sigma_s**3 / h**3`` to the
     local packing fraction. At ``h = 10 nm`` that is 0.0042 for a 2 nm sphere
     (``xi3 = 1`` at about 239 particles), 0.065 for 5 nm (about 15), and 0.524 for
-    10 nm — a sphere as wide as the voxel is strictly one per voxel, and no
+    10 nm. A sphere as wide as the voxel is strictly one per voxel, and no
     crowding study is possible at that combination.
 
     Fails when ``cap`` particles of any single species would reach ``xi3 >= 1``,
@@ -159,7 +159,7 @@ def report_occupancy_at_half_packing(exclusion, report):
     for name, n in table.items():
         parts.append(f"{name}: n/a (ideal)" if not np.isfinite(n) else f"{name}: {n:.1f}")
     report.info(
-        "packing", "occupancy at xi3 = 0.5 per species — " + ", ".join(parts)
+        "packing", "occupancy at xi3 = 0.5 per species: " + ", ".join(parts)
     )
     return table
 
@@ -169,9 +169,9 @@ def check_cap_binds_after_exclusion(max_xi3, occupancy_cap, report, threshold=0.
 
     There is a window in which a volume-exclusion study is meaningful:
 
-    * ``max_xi3 >= 1`` — rejected by :func:`check_sigma_voxel_consistency`, because
+    * ``max_xi3 >= 1``: rejected by :func:`check_sigma_voxel_consistency`, because
       the packing fraction cannot reach one.
-    * ``max_xi3`` small — a *full* voxel is still barely excluded, so the BMCSL
+    * ``max_xi3`` small: a *full* voxel is still barely excluded, so the BMCSL
       insertion cost never becomes large and density is limited by the integer cap
       instead of by the physics. Occupancy then piles up against the cap, transport
       starts being rejected mechanically, and the measured behaviour is an artifact
@@ -186,7 +186,7 @@ def check_cap_binds_after_exclusion(max_xi3, occupancy_cap, report, threshold=0.
 
     # Upper end of the window. This duplicates the intent of
     # check_sigma_voxel_consistency but is reachable from the exclusion model,
-    # which knows the increments and the cap without needing the voxel edge —
+    # which knows the increments and the cap without needing the voxel edge,
     # so an ExclusionModel built directly can never accept xi3 >= 1.
     if max_xi3 >= 1.0:
         report.fail(

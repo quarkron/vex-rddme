@@ -1,8 +1,8 @@
 """Lattice state: per-species integer occupancy counts.
 
 ``n[species, voxel]`` is the whole state. This is the reaction-diffusion master
-equation's own variable — the RDME is an equation over occupancy numbers, not over
-particle trajectories — and nothing in this package needs particle identity.
+equation's own variable. The RDME is an equation over occupancy numbers, not over
+particle trajectories, and nothing in this package needs particle identity.
 
 The occupancy cap is a *total* across species, not per species: it is a statement
 about how many hard spheres fit in a voxel, and spheres of different species
@@ -174,7 +174,7 @@ class State:
         """Scatter ``total`` particles of one species uniformly, respecting the cap.
 
         Placement is by draw-and-retry against the remaining capacity, so the
-        requested total is placed exactly or an error is raised — the count is never
+        requested total is placed exactly or an error is raised. The count is never
         silently truncated.
         """
         idx = self.index(s)

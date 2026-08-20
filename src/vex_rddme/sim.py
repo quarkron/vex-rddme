@@ -1,7 +1,7 @@
 """Assembly: one object that wires the layers and runs the construction guards.
 
 ``Simulation`` is where the guards that need more than one layer's information get
-called — in particular the sigma/voxel consistency check, which needs the voxel edge
+called. In particular the sigma/voxel consistency check needs the voxel edge
 from the lattice and the diameters from the species.
 
 Operator splitting order is transport then reactions, matching the production

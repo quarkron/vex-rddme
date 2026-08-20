@@ -126,7 +126,7 @@ def test_plot_mu_ex_sorts_by_packing_fraction():
 
 def test_animate_embeds_every_frame():
     """Frames are base64 PNGs, so titles are drawn *into* the images, not emitted
-    as HTML text — the check is that one image per frame is embedded."""
+    as HTML text. The check is that one image per frame is embedded."""
     lat, st = make_state(shape=(6, 6))
     n_frames = 4
     frames = [st.counts[0] + i for i in range(n_frames)]

@@ -5,7 +5,7 @@ Two tests here exist because the corresponding mistake is silent:
 * ``test_bfex_scales_with_voxel_volume`` and
   ``test_insertion_work_matches_carnahan_starling`` pin the *scale*. The bracketed
   BMCSL expression is a free-energy density; forgetting the voxel-volume factor
-  makes every channel work ``1/V`` too small — 1000x at a 10 nm voxel — which
+  makes every channel work ``1/V`` too small, 1000x at a 10 nm voxel, which
   switches exclusion off while every density profile still looks plausible.
 * ``test_f_order_strides_are_detected`` pins the *index order*. C-order strides are
   required to match a table built by ``np.indices``; the transposed assignment
@@ -220,7 +220,7 @@ def test_removal_lookup_is_valid_whenever_the_particle_is_present():
     """``idx - stride_s`` addresses the intended count vector when n_s >= 1.
 
     When ``n_s == 0`` the subtraction borrows from a higher digit and addresses an
-    unrelated vector — but a hop or reaction can only remove a particle that is
+    unrelated vector. But a hop or reaction can only remove a particle that is
     there, so that case never arises in the solver.
     """
     m = make_model(sigmas=(4.0, 6.0), cap=8)

@@ -1,6 +1,6 @@
 """The STE linter, and the guarantee that operator-facing text stays compliant.
 
-Two jobs here. The first is to test the linter itself — a checker that silently
+Two jobs here. The first is to test the linter itself. A checker that silently
 passes everything is worse than none. The second is the regression guarantee:
 guard messages and the README must stay STE-clean, so prose cannot drift back.
 """
@@ -156,3 +156,78 @@ def test_cli_fails_on_a_relaxed_then_tightened_limit():
     )
     assert r.returncode == 1
     assert "sentence-length" in r.stdout
+
+
+# ------------------------------------------------ typography regression guards
+#
+# The forbidden strings are assembled from codepoints and fragments, so this file
+# contains neither of them literally. That lets the checks scan every tracked file
+# including this one, instead of exempting themselves.
+
+EM_DASH = chr(0x2014)
+EN_DASH = chr(0x2013)
+FORBIDDEN_WORD = "r" + "ung"
+
+
+def _decoded_text(path):
+    """File text, with notebook cell sources decoded from their JSON escapes.
+
+    A notebook stores an em dash as six characters, a backslash-u escape, so a plain
+    grep over the file misses it. That is how 28 em dashes survived the first pass.
+    """
+    import json
+
+    raw = path.read_text()
+    if path.suffix == ".ipynb":
+        return "\n".join("".join(c["source"]) for c in json.loads(raw)["cells"])
+    return raw
+
+
+def _tracked_files():
+    out = subprocess.run(["git", "ls-files"], capture_output=True, text=True,
+                         cwd=str(REPO)).stdout.split()
+    return [REPO / f for f in out if (REPO / f).exists()]
+
+
+def test_tracked_files_were_found():
+    """Guard the guard: an empty listing would make the checks below vacuous."""
+    assert len(_tracked_files()) >= 25
+
+
+def test_this_file_contains_no_forbidden_literal():
+    """Confirms the assembly trick works, so the scans below really cover this file."""
+    raw = pathlib.Path(__file__).read_text()
+    assert EM_DASH not in raw
+    assert FORBIDDEN_WORD not in raw
+
+
+def test_no_em_dashes_anywhere():
+    offenders = {p.name: n for p in _tracked_files()
+                 if (n := _decoded_text(p).count(EM_DASH))}
+    assert not offenders, f"em dashes reappeared: {offenders}"
+
+
+def test_en_dashes_survive_in_proper_names():
+    """En dashes join surnames and are correct typography. They must not be swept up
+    with the em dashes."""
+    readme = _decoded_text(REPO / "README.md")
+    assert EN_DASH in readme
+    assert f"Wang{EN_DASH}Peskin{EN_DASH}Elston" in readme
+    assert f"Fr\u00f6hner{EN_DASH}No\u00e9" in readme
+
+
+def test_minus_signs_survive_in_maths():
+    """U+2212 is a maths minus, not a dash to remove."""
+    assert chr(0x2212) in _decoded_text(REPO / "README.md")
+
+
+def test_the_demonstrations_are_called_demonstrations():
+    offenders = {p.name: n for p in _tracked_files()
+                 if (n := _decoded_text(p).lower().count(FORBIDDEN_WORD))}
+    assert not offenders, f"the old word reappeared: {offenders}"
+
+
+def test_all_five_demonstrations_are_present():
+    names = sorted(p.name for p in (REPO / "notebooks").glob("*.ipynb"))
+    assert len(names) == 5, names
+    assert names[-1].startswith("05_")

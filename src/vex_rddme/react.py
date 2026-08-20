@@ -6,7 +6,7 @@ basis-field part ``sum_s dnu_s phi_s(v)`` plus the volume-exclusion part.
 
 The exclusion part is one table shift. A reaction changes the count vector by
 ``dnu``, so ``didx = sum_s dnu_s * stride_s`` is fixed at declaration time and the
-work is a single pair of gathers — the same mechanism transport uses, which is why
+work is a single pair of gathers, the same mechanism transport uses. That is why
 this module is short.
 
 **The reverse channel is evaluated from the post-reaction state.** For a pair with
@@ -18,7 +18,7 @@ forward change ``dnu``:
 so ``pi_f / pi_r = exp(-dPhi)`` identically and detailed balance holds by
 construction. Evaluating the reverse from ``n`` instead would give
 ``F(n - dnu) - F(n)``, which is not ``-dbF_f`` unless F is linear. It is not, so
-detailed balance would break silently — hence
+detailed balance would break silently. Hence
 :meth:`ReactionSet.detailed_balance_residual` and the test that the pre-state
 formulation fails it.
 
@@ -175,7 +175,7 @@ class ReactionSet:
     # ------------------------------------------------------------------- work
 
     def field_work(self, dnu, vox=None):
-        """``sum_s dnu_s phi_s(v)`` — the basis-field part of the reaction work.
+        """``sum_s dnu_s phi_s(v)``: the basis-field part of the reaction work.
 
         ``vox`` selects a subset of voxels, so the same expression serves both the
         per-voxel step (all voxels) and the detailed-balance check (synthetic count
@@ -190,7 +190,7 @@ class ReactionSet:
         The table's removal lookup ``idx - stride_s`` only addresses the intended count
         vector when ``n_s >= 1``; with ``n_s == 0`` the subtraction borrows from a
         higher digit and lands on an unrelated composition. The step path never
-        notices, because the propensity is zero wherever a reactant is missing — but
+        notices, because the propensity is zero wherever a reactant is missing. But
         anything that *averages* the work over voxels would silently average garbage.
         """
         counts = np.asarray(counts)
@@ -209,7 +209,7 @@ class ReactionSet:
 
         Returns exactly zero where the change is not representable (a reactant is
         absent, or a product would exceed the table radix). Zero is the honest value
-        there: no reaction can occur, so no work is done — and it keeps the array safe
+        there: no reaction can occur, so no work is done. It also keeps the array safe
         to average, which a garbage lookup would not be.
         """
         if self.exclusion is None or self.exclusion.n_hard_core == 0:
@@ -246,7 +246,7 @@ class ReactionSet:
 
     @staticmethod
     def acceptance(dphi):
-        """``pi = min(1, exp(-dPhi))`` — the Metropolis rule Fröhner-Noé prescribes."""
+        """``pi = min(1, exp(-dPhi))``: the Metropolis rule Fröhner-Noé prescribes."""
         return np.minimum(1.0, np.exp(np.minimum(-np.asarray(dphi), 700.0)))
 
     # ------------------------------------------------------- detailed balance
@@ -255,7 +255,7 @@ class ReactionSet:
         """Max ``|pi_f/pi_r - exp(-dPhi_f)|`` over randomised admissible states.
 
         ``from_pre_state=True`` evaluates the reverse work from ``n`` instead of
-        ``n + dnu`` — the incorrect formulation — so a test can confirm it fails.
+        ``n + dnu``, the incorrect formulation, so a test can confirm it fails.
         """
         rng = np.random.default_rng(0) if rng is None else rng
         worst = 0.0
@@ -304,7 +304,7 @@ class ReactionSet:
 
         Evaluated on the **feasible set** only. Where the forward change is not
         representable the work is defined as zero (see :meth:`exclusion_work`), and
-        zero is not the negative of the reverse work — so including those voxels would
+        zero is not the negative of the reverse work. Including those voxels would
         report a spurious residual for a state in which no reaction can occur anyway.
         Forward feasibility implies the reverse is feasible from the post-state, since
         the forward change is what created the products the reverse consumes.

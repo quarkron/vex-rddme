@@ -9,7 +9,7 @@ Three layers, each exact:
        xi[n](v)  = sum_s n_s(v) * dxi[s][n]
 
    ``xi[3]`` is the local packing fraction. The n=0..2 moments carry number,
-   radius, and surface — which is why a reaction that merges two spheres into one
+   radius, and surface. That is why a reaction that merges two spheres into one
    of equal *volume* still changes the free energy.
 
 2. **White-Bear / BMCSL excess free energy.** The functional of those four fields.
@@ -18,7 +18,7 @@ Three layers, each exact:
    a function of the integer count vector, and can be tabulated exactly. Adding or
    removing one particle of species ``s`` is an index shift of ``+-stride_s``; a
    whole reaction stoichiometry is a single shift ``sum_s dnu_s * stride_s``. So
-   every kinetic channel — transport and reaction alike — costs one gather.
+   every kinetic channel, transport and reaction alike, costs one gather.
 
    Strides are **C-order** (``radix**(S-1-s)``) to match a table built by
    ``np.indices``. The transposed assignment produces a table that is silently
@@ -81,14 +81,14 @@ def bfex(xi, voxel_volume_nm3):
     ``voxel_volume_nm3`` is **required**, not defaulted. The bracketed expression is
     a free-energy *density* (units 1/nm^3, since ``xi0`` carries them); multiplying
     by the voxel volume turns it into a per-voxel energy in kT. Omitting the factor
-    leaves every channel work smaller by exactly ``1/V`` — with a 10 nm voxel that
+    leaves every channel work smaller by exactly ``1/V``. With a 10 nm voxel that
     is 1000x too weak, which switches exclusion off while every profile still looks
     plausible. A pure scale error of that kind is invisible to a correlation
     coefficient, so the argument is mandatory and
     ``test_vex.py::test_insertion_work_matches_carnahan_starling`` pins the scale.
 
     Empty voxels return exactly zero. Voxels at or above saturation are *not*
-    silently clamped — the caller is expected to have run the saturation guard —
+    silently clamped. The caller is expected to have run the saturation guard,
     but the arithmetic is kept finite here so a guard can report a value rather
     than crash on a NaN.
     """
@@ -120,7 +120,7 @@ def mu_ex_carnahan_starling(eta):
 
     ``mu_ex = (8*eta - 9*eta**2 + 3*eta**3) / (1 - eta)**3``
 
-    The analytic reference for rung 2. BMCSL reduces to this for one species, so
+    The analytic reference for demonstration 2. BMCSL reduces to this for one species, so
     this function is a check on :func:`bfex`, not a component of the solver.
     """
     eta = np.asarray(eta, dtype=np.float64)
@@ -252,7 +252,7 @@ class ExclusionModel:
         """Packing fraction per voxel from a subset of species.
 
         ``species`` is a sequence of indices; ``None`` means all of them. Restricting
-        it gives the contribution of one group — the crowder's packing fraction is the
+        it gives the contribution of one group. The crowder's packing fraction is the
         independent variable of the crowding sweep, and it has to be separable from
         the reacting species' own contribution.
         """
@@ -305,7 +305,7 @@ class ExclusionModel:
     def stoichiometry_offset(self, dnu):
         """Single table shift for a stoichiometric change ``dnu`` over all species.
 
-        ``sum_s dnu_s * stride_s`` — so a whole reaction's exclusion work is one
+        ``sum_s dnu_s * stride_s``. So a whole reaction's exclusion work is one
         pair of gathers regardless of how many species it involves.
         """
         return int(sum(int(dnu[s]) * self.stride(s) for s in range(self.n_species)))
@@ -314,8 +314,8 @@ class ExclusionModel:
     def _is_integral(counts):
         """Whether counts can index the table.
 
-        The table is defined on integer count vectors. A *fractional* composition —
-        a time-averaged mean density, say — is still a perfectly meaningful argument
+        The table is defined on integer count vectors. A *fractional* composition,
+        a time-averaged mean density for instance, is still a meaningful argument
         to the free energy, since it is a smooth function of the weighted densities;
         it simply cannot be looked up. Such input takes the elementwise path, which
         is not a degradation: the two paths agree to roundoff wherever both apply,

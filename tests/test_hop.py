@@ -2,9 +2,9 @@
 that are validated here rather than demonstrated in a notebook.
 
 ``test_bare_hop_reproduces_boltzmann_profile`` is the layer-isolation test: without
-it, a rung-1 notebook failure cannot be attributed to transport versus acceptance.
+it, a demonstration-1 notebook failure cannot be attributed to transport versus acceptance.
 ``test_removal_term_is_self_excluded`` pins the self-exclusion, whose absence would
-otherwise only show up as a quantitative shift in rung 2.
+otherwise only show up as a quantitative shift in demonstration 2.
 """
 
 import numpy as np
@@ -295,7 +295,7 @@ def test_probability_sum_guard_fires_when_work_is_too_steep():
 def test_bare_hop_reproduces_boltzmann_profile():
     """rho ~ exp(-phi) with exclusion and reactions off.
 
-    Isolates transport. If this passes and rung 1 fails, the fault is in the
+    Isolates transport. If this passes and demonstration 1 fails, the fault is in the
     acceptance layer, not here.
     """
     gamma = 2.0
@@ -356,8 +356,8 @@ def test_zero_coupling_stays_uniform_in_the_same_field():
 def test_removal_term_is_self_excluded():
     """``remove[s][v] == F(n(v)) - F(n(v) - dxi_s)``, evaluated one particle down.
 
-    The alternative — evaluating the removal at ``F(n(v))`` itself, i.e. omitting
-    the self-exclusion — would let a particle feel its own volume at the voxel it is
+    The alternative, evaluating the removal at ``F(n(v))`` itself and so omitting
+    the self-exclusion, would let a particle feel its own volume at the voxel it is
     leaving, and biases every hop out of an occupied voxel.
     """
     lat, st, hop, _ = build(

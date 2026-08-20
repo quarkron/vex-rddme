@@ -7,9 +7,9 @@ d=2 is +y, d=3 is -y.
 Two array operations carry the geometry, and they roll in *opposite* directions
 because they answer opposite questions:
 
-  ``deposit(m, d)``   — m particles left each voxel heading in direction d;
+  ``deposit(m, d)``: m particles left each voxel heading in direction d;
                         place them at their destinations.
-  ``neighbour(a, d)`` — at each voxel, read the value a holds at that voxel's
+  ``neighbour(a, d)``: at each voxel, read the value a holds at that voxel's
                         direction-d neighbour.
 
 Getting these two confused is a silent one-voxel shift in the drift, which is
@@ -88,7 +88,7 @@ class Lattice:
 
         In 2D the lattice is a slab one voxel thick, so the volume is still
         ``h**3``. Weighted densities are volume fractions, so they must be
-        referred to a real volume regardless of the lattice dimension —
+        referred to a real volume regardless of the lattice dimension,
         using ``h**2`` in 2D would make the packing fraction dimensionless in
         the wrong way and every free energy would be wrong by a factor of h.
         """

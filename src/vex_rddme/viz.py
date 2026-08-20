@@ -6,7 +6,7 @@ Import it explicitly when you want figures::
 
 2D is the default for figures because a lattice renders directly as an image and is
 legible at a glance. A 3D lattice has no such rendering, so :func:`show_lattice`
-reduces it — by summing along an axis (the default, which keeps every particle
+reduces it, by summing along an axis (the default, which keeps every particle
 visible) or by slicing (which shows a true cross-section).
 """
 
@@ -92,7 +92,7 @@ def plot_profile(
 ):
     """Measured profile with error bars against an analytic prediction.
 
-    The standard figure for every validation rung: the reader should be able to see
+    The standard figure for every validation demonstration: the reader should be able to see
     agreement, and the accompanying printed numbers make it quantitative.
     """
     measured = np.asarray(measured, dtype=np.float64)
@@ -121,7 +121,7 @@ def plot_profile(
 
 
 def plot_mu_ex(eta, measured, analytic, sem=None, ax=None):
-    """Excess chemical potential against packing fraction (rung 2)."""
+    """Excess chemical potential against packing fraction (demonstration 2)."""
     order = np.argsort(np.asarray(eta))
     eta = np.asarray(eta)[order]
     measured = np.asarray(measured)[order]
@@ -148,7 +148,7 @@ def animate(frames, lattice, reduce="sum", interval=120, cmap="viridis", titles=
     """Animate a sequence of lattice fields. Returns an HTML string for a notebook.
 
     Uses ``to_jshtml``, so every frame is embedded as a base64 PNG and no writer
-    binary is needed — ffmpeg is not a dependency of this package.
+    binary is needed. ffmpeg is not a dependency of this package.
 
     One caveat: matplotlib's ``to_jshtml`` output links a font-awesome stylesheet
     from a CDN for the playback-button icons. The animation itself is fully embedded
