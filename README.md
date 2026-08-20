@@ -65,29 +65,6 @@ Part 1 fixes the excess chemical potential at the mean density. Part 2 fixes its
 curvature, which the first moment cannot see. Part 3 fixes the cross-species terms,
 which no single-species measurement constrains.
 
-## What this is not
-
-**Not a production solver.** The production implementation is the CUDA drift-RDME
-solver in Lattice Microbes 2.6. This package is independent of it.
-
-**This package does not claim or test numerical agreement with Lattice Microbes
-2.6.** Do not report results from here as if the production solver produced them. The
-four analytic checks above pin correctness. Comparison against the kernel does not.
-
-**Out of scope, deliberately:** filaments and the multi-structure lattice handler;
-self-consistent fields (ψ is input, not state); smeared multi-voxel bodies; trajectory
-I/O and checkpointing; exact hop integration for steep potentials.
-
-## A 2D result refutes cheaply. It only suggests positively
-
-- A mechanism that **fails** in 2D almost certainly fails in 3D. Refutations travel.
-- A mechanism that **works** in 2D may still fail in 3D. Positive results do not travel.
-
-Three things the method depends on are dimension-dependent: the bond-angle spectrum, the
-non-crossing constraints, and the conflict rate between parallel moves at density. So a
-2D demonstration says a mechanism is worth testing in 3D. It does not say the mechanism
-holds there.
-
 ## Guards
 
 Every condition that stops the package delivering the requested physics either aborts
@@ -144,21 +121,6 @@ tracking the profile's centre of mass (`bench/relaxation.py`):
 - **32³ works for 3D.** Ten minutes. Slower, but not a token mode.
 - **128² is for figures.** Twenty-five minutes is a go-away-and-come-back run.
 
-### Exclusion sets the timestep, not the CFL bound
-
-With exclusion active, the downhill Bernoulli factor binds τ, not `q ≤ 1/(2·dim)`. For a
-strongly downhill move `B(u) → |u|`. The largest work a particle sheds is `μ_ex` at the
-highest packing fraction it meets:
-
-```
-    2 · dim · q · μ_ex(η_max)  ≤  1
-```
-
-At η = 0.5, `μ_ex ≈ 17 kT`. The admissible τ is then an order of magnitude below the CFL
-bound. Use `suggest_tau()` to compute it.
-
-If the `hop-probability-sum` guard fires, τ is too large for the crowding that
-developed. That is not a bug. The 128² row above needed a τ backoff for this reason.
 
 ## Tutorials: launching simulations
 
@@ -408,10 +370,6 @@ for i in range(STEPS):
 print(f"{rho.n} samples, mean {rho.mean.mean():.3f}, typical error {rho.sem.mean():.4f}")
 ```
 
-`Series` uses Welford's algorithm, so the error bar stays accurate even when the mean
-is large. Its `sem` is the naive standard error over samples, which is a **lower
-bound** when samples are correlated.
-
 ### 8. Read the guard output
 
 Construction reports what it found. A normal run looks like this:
@@ -484,9 +442,4 @@ tests/         242 tests
 
 ## References
 
-- Wang, Peskin & Elston: Scharfetter–Gummel discretisation of the lattice
-  Fokker–Planck equation
-- Roth, Evans, Lang & Kahl 2002; Yu & Wu 2002: White-Bear / BMCSL fundamental-measure
-  excess free energy
-- Fröhner & Noé 2018: Metropolis acceptance for reactive lattice schemes
-- Minton: macromolecular crowding shifting association equilibria
+to add. see manuscript draft for vex-rddme.
