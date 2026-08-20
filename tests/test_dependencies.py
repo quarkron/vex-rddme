@@ -109,28 +109,78 @@ def _readme_blocks():
     return re.findall(r"```python\n(.*?)```", readme.read_text(), re.S)
 
 
-def test_readme_has_the_expected_number_of_blocks():
-    """Guard the guard: an empty match would make the execution test vacuous."""
-    assert len(_readme_blocks()) >= 9
+def _run(block, index, namespace, cwd=None):
+    """Execute one README block.
 
-
-@pytest.mark.parametrize("index", range(len(_readme_blocks())))
-def test_readme_block_runs_as_printed(index):
-    """Every python block in the README must execute.
-
-    The quickstart is the first thing a reader meets and the tutorials are the second,
-    so a block that has drifted from the API is worse than no block at all. Each runs
-    in a fresh namespace, because each is written to stand alone.
+    Runs in ``cwd`` when given, because one tutorial calls ``savefig`` and an
+    artifact written into the repository would get committed by accident. It did
+    once.
     """
     import contextlib
     import io
     import logging
+    import os
 
-    block = _readme_blocks()[index]
-    logging.disable(logging.CRITICAL)      # guard INFO lines are not the subject here
+    logging.disable(logging.CRITICAL)      # guard INFO is not the subject here
+    prev = os.getcwd()
     try:
+        if cwd is not None:
+            os.chdir(cwd)
         with contextlib.redirect_stdout(io.StringIO()):
-            exec(compile(block, f"README block {index}", "exec"),
-                 {"__name__": "__readme__"})
+            exec(compile(block, f"README block {index}", "exec"), namespace)
     finally:
+        os.chdir(prev)
         logging.disable(logging.NOTSET)
+
+
+# The visualisation section is one worked example: a setup block, then fragments that
+# draw from it. Those fragments are expected to need the setup. Every other block is
+# a numbered tutorial step and must stand on its own. Pinning the split here means a
+# later edit that quietly makes step 4 depend on step 3 gets caught.
+CONTINUATION_BLOCKS = {10, 11, 12, 13, 14, 16}
+
+
+def test_readme_has_the_expected_number_of_blocks():
+    """Guard the guard: an empty match would make the checks below vacuous."""
+    assert len(_readme_blocks()) >= 17
+
+
+def test_readme_runs_in_reading_order(tmp_path):
+    """The whole document, top to bottom, in one namespace. This is how a reader
+    works through it, so it is the property that matters most."""
+    import matplotlib
+
+    matplotlib.use("Agg")
+    blocks = _readme_blocks()
+    ns = {"__name__": "__readme__"}
+    for i, b in enumerate(blocks):
+        _run(b, i, ns, cwd=tmp_path)
+
+
+@pytest.mark.parametrize("index", sorted(set(range(len(_readme_blocks())))
+                                         - CONTINUATION_BLOCKS))
+def test_numbered_tutorial_block_stands_alone(index, tmp_path):
+    """Each numbered step must run in a fresh namespace.
+
+    A step that silently depends on an earlier one cannot be copied out, which is the
+    main way a tutorial gets used.
+    """
+    import matplotlib
+
+    matplotlib.use("Agg")
+    _run(_readme_blocks()[index], index, {"__name__": "__readme__"}, cwd=tmp_path)
+
+
+@pytest.mark.parametrize("index", sorted(CONTINUATION_BLOCKS))
+def test_continuation_block_really_is_a_continuation(index, tmp_path):
+    """The fragments in the visualisation section are declared as continuations.
+
+    If one becomes self-contained, this fails and the declaration above should shrink.
+    Without this the set could silently grow to cover a genuine regression.
+    """
+    import matplotlib
+
+    matplotlib.use("Agg")
+    with pytest.raises(NameError):
+        _run(_readme_blocks()[index], index, {"__name__": "__readme__"},
+             cwd=tmp_path)

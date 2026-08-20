@@ -149,3 +149,121 @@ def test_animate_rejects_an_empty_sequence():
     lat, _ = make_state()
     with pytest.raises(ValueError, match="no frames"):
         viz.animate([], lat)
+
+
+# ------------------------------------------- trajectory and time-series helpers
+
+
+def test_plot_timeseries_draws_one_line_per_label():
+    steps = np.arange(10)
+    ax = viz.plot_timeseries(steps, {"A": np.arange(10), "B": np.arange(10) * 2},
+                             title="counts")
+    assert len(ax.lines) == 2
+    assert ax.get_title() == "counts"
+
+
+def test_plot_timeseries_rejects_a_length_mismatch():
+    with pytest.raises(ValueError, match="has 5 points but x has 10"):
+        viz.plot_timeseries(np.arange(10), {"A": np.arange(5)})
+
+
+def test_plot_timeseries_log_scale():
+    ax = viz.plot_timeseries(np.arange(5), {"A": np.arange(1, 6)}, logy=True)
+    assert ax.get_yscale() == "log"
+
+
+def test_profile_with_field_has_two_shared_panels():
+    profile = np.array([4.0, 3.0, 2.0, 1.0])
+    psi = np.linspace(0, 1, 4)
+    fig, (top, bot) = viz.plot_profile_with_field(profile, psi, gamma=2.0)
+    assert len(fig.axes) == 2
+    assert top.get_xlim() == bot.get_xlim(), "panels must share the x axis"
+    assert "2" in bot.get_ylabel()          # gamma is annotated
+
+
+# ------------------------------------------------------- particle scatter
+
+
+def test_scatter_particles_draws_one_point_per_particle_in_2d():
+    lat = Lattice(shape=(6, 6), voxel_nm=20.0)
+    counts = np.zeros(lat.shape, dtype=np.int64)
+    counts[2, 3] = 5
+    counts[4, 1] = 2
+    ax = viz.scatter_particles(counts, lat)
+    assert sum(c.get_offsets().shape[0] for c in ax.collections) == 7
+    assert "7 particles" in ax.get_title()
+
+
+def test_scatter_particles_jitters_inside_the_voxel():
+    """Points must land within the voxel they belong to, not on its centre."""
+    lat = Lattice(shape=(4, 4), voxel_nm=20.0)
+    counts = np.zeros(lat.shape, dtype=np.int64)
+    counts[1, 2] = 200
+    ax = viz.scatter_particles(counts, lat, jitter=0.4)
+    pts = ax.collections[0].get_offsets()
+    assert np.all(np.abs(pts[:, 0] - 1) <= 0.4 + 1e-9)
+    assert np.all(np.abs(pts[:, 1] - 2) <= 0.4 + 1e-9)
+    assert pts[:, 0].std() > 0.1, "points should be spread, not stacked"
+
+
+def test_scatter_particles_works_in_3d():
+    lat = Lattice(shape=(4, 4, 4), voxel_nm=20.0)
+    counts = np.zeros(lat.shape, dtype=np.int64)
+    counts[1, 2, 3] = 6
+    ax = viz.scatter_particles(counts, lat)
+    assert hasattr(ax, "get_zlim"), "should be a 3D axes"
+    assert "6 particles" in ax.get_title()
+
+
+def test_scatter_particles_announces_subsampling():
+    """A thinned picture must not pass as a complete one."""
+    lat = Lattice(shape=(8, 8), voxel_nm=20.0)
+    counts = np.full(lat.shape, 50, dtype=np.int64)      # 3200 particles
+    ax = viz.scatter_particles(counts, lat, max_points=500)
+    assert ax.collections[0].get_offsets().shape[0] == 500
+    title = ax.get_title()
+    assert "3200" in title and "%" in title, title
+
+
+def test_scatter_particles_does_not_annotate_when_nothing_is_dropped():
+    lat = Lattice(shape=(4, 4), voxel_nm=20.0)
+    counts = np.full(lat.shape, 2, dtype=np.int64)
+    ax = viz.scatter_particles(counts, lat, max_points=10_000)
+    assert "%" not in ax.get_title()
+
+
+def test_scatter_particles_rejects_an_empty_lattice():
+    lat = Lattice(shape=(4, 4), voxel_nm=20.0)
+    with pytest.raises(ValueError, match="every voxel is empty"):
+        viz.scatter_particles(np.zeros(lat.shape, dtype=np.int64), lat)
+
+
+def test_scatter_particles_rejects_a_wrong_shape():
+    lat = Lattice(shape=(4, 4), voxel_nm=20.0)
+    with pytest.raises(ValueError, match="pass one species'"):
+        viz.scatter_particles(np.zeros((3, 3), dtype=np.int64), lat)
+
+
+def test_scatter_particles_is_reproducible():
+    lat = Lattice(shape=(5, 5), voxel_nm=20.0)
+    counts = np.full(lat.shape, 3, dtype=np.int64)
+    a = viz.scatter_particles(counts, lat, seed=7).collections[0].get_offsets()
+    b = viz.scatter_particles(counts, lat, seed=7).collections[0].get_offsets()
+    assert np.allclose(a, b)
+
+
+def test_scatter_species_gives_each_species_its_own_colour():
+    lat, st = make_state()
+    ax = viz.scatter_species(st)
+    colours = {tuple(np.ravel(c.get_facecolor())[:3]) for c in ax.collections}
+    assert len(colours) == st.n_species
+    assert ax.get_legend() is not None
+
+
+def test_scatter_species_skips_empty_species():
+    lat = Lattice(shape=(6, 6), voxel_nm=20.0)
+    sp = [Species("A", 4.0, np.zeros(1)), Species("empty", 4.0, np.zeros(1))]
+    st = State(lat, sp, occupancy_cap=20)
+    st.set_counts("A", np.full(lat.shape, 2, dtype=np.int64))
+    ax = viz.scatter_species(st)
+    assert len(ax.collections) == 1, "the empty species should not be drawn"

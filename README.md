@@ -10,6 +10,67 @@
 Two dependencies: numpy and matplotlib. No CUDA, no HDF5, no SWIG, no numba, no
 compile step. It runs in a notebook on a laptop.
 
+## Install
+
+Python 3.9 or newer. CI tests 3.9 and 3.12.
+
+The only runtime dependencies are numpy and matplotlib. There is no build step, so the
+install needs no compiler, no CUDA toolkit and no LLVM.
+
+### As a package
+
+The repository is private, so install it over SSH:
+
+```bash
+pip install "git+ssh://git@github.com/quarkron/vex-rddme.git"
+```
+
+That needs an SSH key registered with your GitHub account. Check it first with
+`ssh -T git@github.com`, which should greet you by username.
+
+Over HTTPS you need a personal access token with `repo` scope:
+
+```bash
+pip install "git+https://<TOKEN>@github.com/quarkron/vex-rddme.git"
+```
+
+### For development
+
+Clone, then install in editable mode with the test extra:
+
+```bash
+git clone git@github.com:quarkron/vex-rddme.git
+cd vex-rddme
+pip install -e ".[test]"
+```
+
+Editable mode means an edit to `src/vex_rddme/` takes effect at once, with no reinstall.
+
+### Check that it worked
+
+```bash
+python -c "import vex_rddme; print(vex_rddme.__version__)"
+python -m pytest tests/ -q          # about four minutes
+python tools/ste_lint.py            # prose check on guard messages and this file
+```
+
+The test suite is the real check. It runs the three demonstration notebooks at reduced
+step counts and executes every code block in this README, so a green suite means the
+documented examples work on your machine, not only on ours.
+
+### To run the notebooks
+
+Jupyter is deliberately not a dependency, because the solver does not need it. Install
+it separately:
+
+```bash
+pip install jupyterlab
+jupyter lab notebooks/
+```
+
+Each notebook prints its measured values beside the analytic predictions, so you can
+confirm the install reproduces them.
+
 ## Quickstart
 
 ```python
@@ -357,6 +418,162 @@ relaxation table gives the wall time for each.
 
 A useful sanity check before a long run: do a short one and read the guard lines. If
 `cap-vs-exclusion` warns, or `cfl` shows almost no headroom, fix that first.
+
+### 10. Visualise the run
+
+Import `vex_rddme.viz` separately. It pulls in matplotlib, and the solver does not
+need it.
+
+```python
+import matplotlib
+matplotlib.use("Agg")          # drop this line in a notebook
+
+import numpy as np
+from vex_rddme import Simulation, Species
+from vex_rddme import viz
+from vex_rddme.observe import Series, project
+
+N, STEPS = 32, 1500
+ramp = np.arange(N) / N
+psi = np.broadcast_to(ramp, (N, N)).copy()[None, ...]
+
+sim = Simulation(
+    shape=(N, N), voxel_nm=20.0,
+    species=[Species("A", sigma_nm=0.0, gamma=np.array([2.0]))],
+    occupancy_cap=400, psi=psi, D_um2_s=1.0, tau_s=2.0e-5, seed=0,
+    attach_log_handler=False,
+)
+sim.seed_uniform("A", 4000)
+sim.record_initial()
+
+# collect frames and a profile as the run proceeds
+frames, steps, edge = [], [], []
+rho = Series("density")
+for i in range(STEPS):
+    sim.step()
+    if i % 150 == 0:
+        frames.append(sim.state.counts[0].copy())
+        steps.append(i)
+        edge.append(float(sim.state.lattice_view("A")[:, 0].sum()))
+    if i >= STEPS // 3 and i % 25 == 0:
+        rho.add(project(sim.state.lattice_view("A"), sim.lattice) / N)
+
+print(f"{len(frames)} frames, {rho.n} profile samples")
+```
+
+Each fragment below continues that run. They re-import what they use, so you can copy
+one on its own, but they read `sim`, `rho`, `frames` and `steps` from the setup above.
+
+**A snapshot of the lattice.** `show_lattice` draws one field as an image;
+`show_species` gives one panel per species.
+
+```python
+from vex_rddme import viz
+
+ax = viz.show_lattice(sim.state.counts[0], sim.lattice, title="A occupancy")
+ax2 = viz.show_species(sim.state)          # one panel per species
+```
+
+**Particles rather than counts.** The state is occupancy counts, so there are no
+particle positions to plot. `scatter_particles` places `n` points at random offsets
+inside a voxel holding `n` particles, which reads like a particle system while showing
+exactly the same information. It works in 2D and in 3D.
+
+```python
+from vex_rddme import viz
+
+ax = viz.scatter_particles(sim.state.counts[0], sim.lattice,
+                           title="A, drawn as particles")
+ax = viz.scatter_species(sim.state)        # every species, one colour each
+```
+
+Above `max_points` the helper subsamples the points and writes the fraction kept into
+the title, so a thinned picture never passes as a complete one.
+
+**A profile with the field beneath it.** Seeing `psi` next to the response is the
+quickest way to tell a real gradient from a statistical one.
+
+```python
+import numpy as np
+from vex_rddme import viz
+
+predicted = np.exp(-2.0 * ramp)
+predicted = predicted / predicted.sum() * rho.mean.sum()
+
+fig, (ax_top, ax_bot) = viz.plot_profile_with_field(
+    rho.mean, psi_line=ramp, sem=rho.sem, predicted=predicted, gamma=2.0,
+)
+```
+
+**A time series.** One line per label, for watching a total approach equilibrium or
+confirming that a conserved total stays flat.
+
+```python
+from vex_rddme import viz
+
+ax = viz.plot_timeseries(
+    steps,
+    {"A in the low-psi column": edge},
+    xlabel="step", ylabel="count",
+    title="filling of the low-psi edge",
+)
+```
+
+**An animation of the trajectory.** `animate` returns an HTML string, so display it in
+a notebook with `IPython.display.HTML`. It embeds every frame as a PNG, so you need no
+ffmpeg.
+
+```python
+from vex_rddme import viz
+
+html = viz.animate(frames, sim.lattice,
+                   titles=[f"step {s}" for s in steps], interval=200)
+print(f"animation: {len(html)} characters, {html.count('base64')} frames embedded")
+
+# in a notebook:
+#   from IPython.display import HTML
+#   HTML(html)
+```
+
+**In three dimensions.** `show_lattice` reduces a 3D lattice by summing along an axis,
+which keeps every particle visible, or by slicing, which gives a true cross-section.
+`scatter_particles` renders it directly as a 3D point cloud.
+
+```python
+import numpy as np
+from vex_rddme import Simulation, Species
+from vex_rddme import viz
+
+sim3 = Simulation(
+    shape=(16, 16, 16), voxel_nm=20.0,
+    species=[Species("A", sigma_nm=0.0, gamma=np.zeros(0))],
+    occupancy_cap=200, D_um2_s=1.0, tau_s=2.0e-5, seed=0,
+    attach_log_handler=False,
+)
+sim3.seed_uniform("A", 3000)
+sim3.record_initial()
+for _ in range(200):
+    sim3.step()
+
+ax_sum   = viz.show_lattice(sim3.state.counts[0], sim3.lattice, reduce="sum",
+                            title="summed along z")
+ax_slice = viz.show_lattice(sim3.state.counts[0], sim3.lattice, reduce="slice",
+                            title="one z slice")
+ax_pts   = viz.scatter_particles(sim3.state.counts[0], sim3.lattice, size=2.0,
+                                 title="3D point cloud")
+```
+
+**Saving a figure.** These helpers return axes, so use matplotlib as usual.
+
+```python
+import matplotlib.pyplot as plt
+from vex_rddme import viz
+
+ax = viz.show_lattice(sim.state.counts[0], sim.lattice, title="A occupancy")
+ax.figure.savefig("occupancy.png", dpi=150, bbox_inches="tight")
+plt.close("all")
+print("wrote occupancy.png")
+```
 
 ## Layout
 
