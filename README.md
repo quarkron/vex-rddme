@@ -12,29 +12,8 @@ compile step. It runs in a notebook on a laptop.
 
 ## Install
 
-Python 3.9 or newer. CI tests 3.9 and 3.12.
-
 The only runtime dependencies are numpy and matplotlib. There is no build step, so the
 install needs no compiler, no CUDA toolkit and no LLVM.
-
-### As a package
-
-The repository is private, so install it over SSH:
-
-```bash
-pip install "git+ssh://git@github.com/quarkron/vex-rddme.git"
-```
-
-That needs an SSH key registered with your GitHub account. Check it first with
-`ssh -T git@github.com`, which should greet you by username.
-
-Over HTTPS you need a personal access token with `repo` scope:
-
-```bash
-pip install "git+https://<TOKEN>@github.com/quarkron/vex-rddme.git"
-```
-
-### For development
 
 Clone, then install in editable mode with the test extra:
 
