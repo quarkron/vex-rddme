@@ -305,14 +305,19 @@ class Hop:
             n_over = int(np.count_nonzero(occ > self.state.occupancy_cap))
             self.report.fail(
                 "occupancy-cap",
-                f"occupancy cap {self.state.occupancy_cap} exceeded after transport"
-                f"{'' if step is None else f' at step {step}'}: voxel {where} "
-                f"{lat.coord(where)} holds {worst}, and {n_over} voxel(s) are over. "
-                f"Particles targeted voxels that had room before the step but "
-                f"collided on arrival. Reduce tau so fewer particles move per step, "
-                f"raise occupancy_cap, or reduce the particle count. If exclusion is "
-                f"meant to prevent this, check that the cap is not the binding "
-                f"constraint (see the cap-vs-exclusion guard).",
+                f"Transport exceeded the occupancy cap "
+                f"{self.state.occupancy_cap}"
+                f"{'' if step is None else f' at step {step}'}.\n"
+                f"Voxel {where} {lat.coord(where)} holds {worst} particles.\n"
+                f"{n_over} voxel(s) are over the cap.\n"
+                f"Each particle moved to a voxel that had room. "
+                f"They then collided on arrival.\n"
+                f"Do one of these steps:\n"
+                f"  - Reduce tau, so that fewer particles move in each step.\n"
+                f"  - Raise occupancy_cap.\n"
+                f"  - Reduce the particle count.\n"
+                f"If exclusion must prevent this, examine the cap-vs-exclusion "
+                f"guard.",
             )
         return self.state
 

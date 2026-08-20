@@ -199,13 +199,16 @@ class ExclusionModel:
         if requested > max_table_entries:
             self.report.warn(
                 "exclusion-fallback",
-                f"free-energy table would need radix**S = {self.radix}**"
+                f"The free-energy table would need radix**S = {self.radix}**"
                 f"{self.n_hard_core} = {requested:,} entries "
-                f"({requested * 8 / 1e6:.1f} MB), above the ceiling of "
-                f"{max_table_entries:,}. Falling back to elementwise evaluation of "
-                f"the BMCSL functional: correct, but roughly 20-30x slower per step. "
-                f"Reduce the occupancy cap, reduce the number of hard-core species, "
-                f"or raise max_table_entries.",
+                f"({requested * 8 / 1e6:.1f} MB).\n"
+                f"The ceiling is {max_table_entries:,} entries.\n"
+                f"This model now evaluates the BMCSL functional elementwise.\n"
+                f"This result is correct, but each step is 20-30x slower.\n"
+                f"Do one of these steps to use the table:\n"
+                f"  - Reduce the occupancy cap.\n"
+                f"  - Reduce the number of hard-core species.\n"
+                f"  - Raise max_table_entries.",
             )
             return
 

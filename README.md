@@ -48,8 +48,8 @@ Set `dim=3` for three dimensions. The physics is identical.
 
 ## What this is
 
-A teaching and prototyping instrument. Read the method in an afternoon, demonstrate it
-in a meeting, try a mechanism without a GPU.
+A teaching and prototyping instrument. Read the method in an afternoon. Show it in a meeting. Try a mechanism
+without a GPU.
 
 Four notebooks check it against analytic results. Each prints the measured value beside
 the prediction, so you verify the implementation instead of trusting it.
@@ -66,9 +66,9 @@ the prediction, so you verify the implementation instead of trusting it.
 **Not a production solver.** The production implementation is the CUDA drift-RDME
 solver in Lattice Microbes 2.6. This package is independent of it.
 
-**No numerical agreement with Lattice Microbes 2.6 is claimed or tested.** Do not
-report results from here as if they came from the production solver. The four analytic
-checks above pin correctness, not comparison against the kernel.
+**This package does not claim or test numerical agreement with Lattice Microbes
+2.6.** Do not report results from here as if the production solver produced them. The
+four analytic checks above pin correctness. Comparison against the kernel does not.
 
 **Out of scope, deliberately:** filaments and the multi-structure lattice handler;
 self-consistent fields (ψ is input, not state); smeared multi-voxel bodies; trajectory
@@ -86,8 +86,8 @@ holds there.
 
 ## Guards
 
-Every condition that stops the package delivering the requested physics either aborts or
-reports. Nothing is clamped, clipped, or substituted silently.
+Every condition that stops the package delivering the requested physics either aborts
+or reports. The package never clamps, clips, or substitutes a value silently.
 
 | guard | catches |
 |---|---|
@@ -113,7 +113,11 @@ and leave headroom above the peak occupancy you expect.
 - Too near the peak: arrivals collide in one step and trip the `occupancy-cap` guard.
 
 That last case fails rather than repairs itself. Discarding the excess would break both
-mass conservation and detailed balance. Reduce τ, raise the cap, or use fewer particles.
+mass conservation and detailed balance. Do one of these steps:
+
+- Reduce τ.
+- Raise the cap.
+- Use fewer particles.
 
 ## Performance
 

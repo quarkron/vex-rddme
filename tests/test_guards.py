@@ -137,7 +137,7 @@ def test_configuration_just_below_unit_packing_passes_construction():
     assert max_xi3 == pytest.approx(0.5)
 
     # ...and the per-step guard is what stops it once voxels actually fill.
-    with pytest.raises(GuardViolation, match="switched off"):
+    with pytest.raises(GuardViolation, match="stops working"):
         check_xi3_saturation(np.array([0.9999]), quiet())
 
 
@@ -246,7 +246,7 @@ def test_xi3_saturation_fails_loudly_with_location():
     assert "0.9995" in msg
     assert "(2, 3)" in msg
     assert "step 1234" in msg
-    assert "switched off" in msg
+    assert "stops working" in msg
 
 
 def test_xi3_below_threshold_returns_the_worst_value():

@@ -127,15 +127,18 @@ def check_sigma_voxel_consistency(species, voxel_nm, occupancy_cap, report):
         if occupancy_cap * dxi3 >= 1.0:
             report.fail(
                 "sigma-voxel",
-                f"species {sp.name!r} has diameter {sp.sigma_nm:g} nm in a "
-                f"{voxel_nm:g} nm voxel, contributing dxi3 = {dxi3:.4g} per "
-                f"particle. With occupancy_cap = {occupancy_cap} the packing "
-                f"fraction reaches {occupancy_cap * dxi3:.3g} >= 1, which is not a "
-                f"physical state. This diameter admits at most {max_n} particle(s) "
-                f"per voxel. Either lower occupancy_cap to {max_n} or below, "
-                f"enlarge the voxel (try voxel_nm >= "
-                f"{sp.sigma_nm * (pi6 * occupancy_cap) ** (1 / 3):.1f}), or reduce "
-                f"the diameter.",
+                f"Species {sp.name!r} has diameter {sp.sigma_nm:g} nm in a "
+                f"{voxel_nm:g} nm voxel.\n"
+                f"Each particle adds dxi3 = {dxi3:.4g}.\n"
+                f"With occupancy_cap = {occupancy_cap}, the packing fraction "
+                f"reaches {occupancy_cap * dxi3:.3g}.\n"
+                f"This is not a physical state. The limit is 1.\n"
+                f"This diameter admits at most {max_n} particle per voxel.\n"
+                f"Do one of these steps:\n"
+                f"  - Set occupancy_cap to {max_n} or less.\n"
+                f"  - Set voxel_nm >= "
+                f"{sp.sigma_nm * (pi6 * occupancy_cap) ** (1 / 3):.1f}.\n"
+                f"  - Reduce the diameter.",
             )
 
     max_xi3 = occupancy_cap * max(
@@ -188,28 +191,34 @@ def check_cap_binds_after_exclusion(max_xi3, occupancy_cap, report, threshold=0.
     if max_xi3 >= 1.0:
         report.fail(
             "cap-vs-exclusion",
-            f"a voxel at the occupancy cap ({occupancy_cap}) would reach packing "
-            f"fraction {max_xi3:.4g} >= 1, which is not a physical state: the BMCSL "
-            f"free energy diverges there. Lower occupancy_cap to at most "
-            f"{int(np.floor(occupancy_cap / max_xi3))}, reduce the diameters, or "
-            f"enlarge the voxel.",
+            f"A voxel at occupancy_cap = {occupancy_cap} reaches packing "
+            f"fraction {max_xi3:.4g}.\n"
+            f"This is not a physical state. The BMCSL free energy diverges at 1.\n"
+            f"Do one of these steps:\n"
+            f"  - Set occupancy_cap to "
+            f"{int(np.floor(occupancy_cap / max_xi3))} or less.\n"
+            f"  - Reduce the diameters.\n"
+            f"  - Enlarge the voxel.",
         )
 
     if max_xi3 < threshold:
         report.warn(
             "cap-vs-exclusion",
-            f"a voxel at the occupancy cap ({occupancy_cap}) reaches a packing "
-            f"fraction of only {max_xi3:.3g}, below {threshold}. Volume exclusion is "
-            f"weak there, so the integer cap rather than the BMCSL free energy will "
-            f"limit local density, and results will reflect the cap. Raise "
-            f"occupancy_cap, increase the diameters, or reduce the voxel size so "
-            f"that a full voxel is genuinely crowded.",
+            f"A voxel at occupancy_cap = {occupancy_cap} reaches packing "
+            f"fraction {max_xi3:.3g}.\n"
+            f"This is below the threshold {threshold}, so volume exclusion is weak.\n"
+            f"The integer cap then limits the local density, not the free energy.\n"
+            f"Your results will show the cap.\n"
+            f"Do one of these steps, to make a full voxel crowded:\n"
+            f"  - Raise occupancy_cap.\n"
+            f"  - Increase the diameters.\n"
+            f"  - Reduce the voxel size.",
         )
     else:
         report.info(
             "cap-vs-exclusion",
-            f"a voxel at the cap reaches packing fraction {max_xi3:.3g}: exclusion "
-            f"is the binding constraint, as intended",
+            f"A voxel at the cap reaches packing fraction {max_xi3:.3g}. "
+            f"Exclusion is the binding constraint, as intended.",
         )
     return max_xi3
 
@@ -224,11 +233,12 @@ def check_table_radix(radix, occupancy_cap, report):
     if radix <= occupancy_cap + 1:
         report.fail(
             "table-radix",
-            f"table radix {radix} is too small for occupancy_cap "
-            f"{occupancy_cap}: the insertion lookup needs count "
-            f"{occupancy_cap + 1} to be representable, so radix must exceed "
-            f"occupancy_cap + 1 = {occupancy_cap + 1}. Use radix >= "
-            f"{occupancy_cap + 2}.",
+            f"Table radix {radix} is too small for occupancy_cap "
+            f"{occupancy_cap}.\n"
+            f"The insertion lookup needs count {occupancy_cap + 1}.\n"
+            f"The radix must be more than occupancy_cap + 1 = "
+            f"{occupancy_cap + 1}.\n"
+            f"Use radix >= {occupancy_cap + 2}.",
         )
     return True
 
@@ -242,21 +252,28 @@ def check_cfl(q, dim, report, D_um2_s=None, tau_s=None, voxel_nm=None):
     """
     limit = 1.0 / (2.0 * dim)
     if not np.isfinite(q) or q < 0:
-        report.fail("cfl", f"baseline hop probability q must be finite and non-negative; got {q}")
+        report.fail(
+            "cfl",
+            f"The baseline hop probability q must be finite and non-negative. "
+            f"You gave {q}.",
+        )
     if q > limit:
         detail = ""
         if None not in (D_um2_s, tau_s, voxel_nm):
             detail = (
-                f" This came from D = {D_um2_s:g} um^2/s, tau = {tau_s:g} s, "
-                f"h = {voxel_nm:g} nm. To satisfy the bound, use tau <= "
-                f"{limit * (voxel_nm * 1e-3) ** 2 / D_um2_s:.3g} s "
-                f"or a larger voxel."
+                f"\nThese values give q: D = {D_um2_s:g} um^2/s, "
+                f"tau = {tau_s:g} s, h = {voxel_nm:g} nm.\n"
+                f"Do one of these steps:\n"
+                f"  - use tau <= "
+                f"{limit * (voxel_nm * 1e-3) ** 2 / D_um2_s:.3g} s.\n"
+                f"  - Use a larger voxel."
             )
         report.fail(
             "cfl",
-            f"baseline hop probability q = {q:.4g} exceeds the {dim}D limit "
-            f"1/(2*dim) = {limit:.4g}. The per-direction probabilities plus the "
-            f"stay probability could not sum to one.{detail}",
+            f"The baseline hop probability q = {q:.4g} exceeds the {dim}D limit "
+            f"{limit:.4g}.\n"
+            f"The limit is 1/(2*dim).\n"
+            f"The per-direction and stay probabilities cannot sum to 1.{detail}",
         )
     report.info("cfl", f"baseline hop probability q = {q:.4g} (limit {limit:.4g}, {dim}D)")
     return True
@@ -286,11 +303,16 @@ def check_xi3_saturation(xi3, report, threshold=0.999, step=None, lattice=None):
         when = "" if step is None else f" at step {step}"
         report.fail(
             "xi3-saturation",
-            f"packing fraction reached {worst:.6g} (threshold {threshold})"
-            f"{loc}{when}; {n_over} voxel(s) are saturated. Above this the BMCSL "
-            f"free energy stops responding to added particles, so volume exclusion "
-            f"is effectively switched off. Lower the occupancy cap, reduce the "
-            f"particle count, enlarge the voxel, or reduce diameters.",
+            f"The packing fraction reached {worst:.6g}{loc}{when}.\n"
+            f"The threshold is {threshold}. {n_over} voxel(s) hold too much.\n"
+            f"Above the threshold, the BMCSL free energy stops responding to "
+            f"added particles.\n"
+            f"Volume exclusion then stops working.\n"
+            f"Do one of these steps:\n"
+            f"  - Lower the occupancy cap.\n"
+            f"  - Reduce the particle count.\n"
+            f"  - Enlarge the voxel.\n"
+            f"  - Reduce the diameters.",
         )
     return worst
 
@@ -320,12 +342,18 @@ def check_hop_probability_sum(p_sum, report, step=None, species_name=None, latti
         when = "" if step is None else f" at step {step}"
         report.fail(
             "hop-probability-sum",
-            f"summed per-direction hop probability reached {worst:.6g} > 1"
-            f"{who}{loc}{when}. The Bernoulli factor exceeds 1 for downhill moves, "
-            f"so the baseline CFL bound is not sufficient; the work has grown until "
-            f"the multinomial split has no probability left. Clipping here would "
-            f"silently discard flux, so this is a failure. Reduce tau, reduce the "
-            f"field gradient, or reduce crowding.",
+            f"The summed hop probability reached {worst:.6g}"
+            f"{who}{loc}{when}.\n"
+            f"The limit is 1.\n"
+            f"The Bernoulli factor exceeds 1 for downhill moves.\n"
+            f"The baseline CFL bound is therefore not enough.\n"
+            f"The work has grown until the split has no probability left.\n"
+            f"Clipping here would silently discard flux.\n"
+            f"This is a failure, not a repair.\n"
+            f"Do one of these steps:\n"
+            f"  - Reduce tau.\n"
+            f"  - Reduce the field gradient.\n"
+            f"  - Reduce the crowding.",
         )
     return worst
 
@@ -369,10 +397,15 @@ def check_reaction_saturation(name, k, tau_s, typical_reactant_product, report, 
     if p > threshold:
         report.warn(
             "reaction-saturation",
-            f"reaction {name!r} has a characteristic firing probability of "
-            f"{p:.4g} per voxel per step (k = {k:g}, tau = {tau_s:g} s, typical "
-            f"reactant product {typical_reactant_product:g}), above the threshold "
-            f"{threshold}. Near saturation the realised rate stops tracking k, so "
-            f"rate changes have little effect. Reduce tau or reduce k.",
+            f"Reaction {name!r} fires with probability {p:.4g} per voxel per "
+            f"step.\n"
+            f"The threshold is {threshold}.\n"
+            f"These values give it: k = {k:g}, tau = {tau_s:g} s, typical "
+            f"reactant product {typical_reactant_product:g}.\n"
+            f"Near saturation, the realised rate stops tracking k.\n"
+            f"Changes to k then have little effect.\n"
+            f"Do one of these steps:\n"
+            f"  - Reduce tau.\n"
+            f"  - Reduce k.",
         )
     return p
