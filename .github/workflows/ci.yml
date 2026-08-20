@@ -1,0 +1,35 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # Install the declared runtime dependencies and pytest, then install the
+      # package itself with --no-deps. If a module ever imports something outside
+      # the whitelist, the test run fails on ImportError rather than silently
+      # acquiring a third dependency from a transitive install.
+      - name: Install declared dependencies only
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy matplotlib pytest
+          python -m pip install --no-deps -e .
+
+      - name: Show installed packages
+        run: python -m pip list
+
+      - name: Run tests
+        run: python -m pytest tests/ -v

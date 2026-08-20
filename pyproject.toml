@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vex-rddme"
+version = "0.1.0"
+description = "Volume-excluded reaction-drift-diffusion master equation (RDDME) on a 2D/3D lattice — a teaching and prototyping instrument"
+readme = "README.md"
+requires-python = ">=3.9"
+
+# Exactly two runtime dependencies. There is no build step: the package is pure
+# Python and imports nothing that needs a compiler, an LLVM toolchain, or a GPU.
+# Adding a third dependency here should be a deliberate decision, not a drift —
+# tests/test_dependencies.py enforces the import whitelist independently.
+dependencies = [
+    "numpy>=1.22",
+    "matplotlib>=3.5",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=7"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
